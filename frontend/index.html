@@ -1,2063 +1,225 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SwarMesh — Decentralized Multi-Agent Coordination Mesh</title>
-  <style>
-    /* ─── Reset & Base ─────────────────────────────────────────── */
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    :root {
-      --bg-deep:       #020408;
-      --bg-panel:      #080f1a;
-      --bg-card:       #0d1826;
-      --bg-card-hover: #111f33;
-      --accent-cyan:   #00e5ff;
-      --accent-blue:   #1565ff;
-      --accent-purple: #7c3aed;
-      --accent-green:  #00e676;
-      --accent-amber:  #ffab00;
-      --accent-red:    #ff1744;
-      --text-primary:  #e8f4fd;
-      --text-secondary:#7ab3d4;
-      --text-muted:    #3d6680;
-      --border:        rgba(0,229,255,0.12);
-      --border-bright: rgba(0,229,255,0.35);
-      --glow-cyan:     0 0 18px rgba(0,229,255,0.45);
-      --glow-blue:     0 0 18px rgba(21,101,255,0.45);
-      --glow-green:    0 0 14px rgba(0,230,118,0.45);
-      --glow-red:      0 0 14px rgba(255,23,68,0.55);
-      --radius:        10px;
-      --transition:    0.25s cubic-bezier(0.4,0,0.2,1);
-      --font-mono:     'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
-      --font-ui:       'Inter', 'Segoe UI', system-ui, sans-serif;
-    }
-    html { scroll-behavior: smooth; }
-    body {
-      font-family: var(--font-ui);
-      background: var(--bg-deep);
-      color: var(--text-primary);
-      min-height: 100vh;
-      overflow-x: hidden;
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MoodMirror - Track Your Emotional Journey</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
 
-    /* ─── Scrollbar ─────────────────────────────────────────────── */
-    ::-webkit-scrollbar { width: 6px; height: 6px; }
-    ::-webkit-scrollbar-track { background: var(--bg-deep); }
-    ::-webkit-scrollbar-thumb { background: var(--accent-blue); border-radius: 3px; }
+        body {
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            color: #fff;
+            min-height: 100vh;
+        }
 
-    /* ─── Animated Background Grid ──────────────────────────────── */
-    .bg-grid {
-      position: fixed; inset: 0; z-index: 0;
-      background-image:
-        linear-gradient(rgba(0,229,255,0.03) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(0,229,255,0.03) 1px, transparent 1px);
-      background-size: 40px 40px;
-      animation: gridPan 60s linear infinite;
-      pointer-events: none;
-    }
-    @keyframes gridPan {
-      0%   { background-position: 0 0; }
-      100% { background-position: 40px 40px; }
-    }
-    .bg-radial {
-      position: fixed; inset: 0; z-index: 0;
-      background: radial-gradient(ellipse 80% 60% at 50% 10%, rgba(21,101,255,0.08) 0%, transparent 70%);
-      pointer-events: none;
-    }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
 
-    /* ─── Layout Shell ───────────────────────────────────────────── */
-    .shell {
-      position: relative; z-index: 1;
-      display: grid;
-      grid-template-rows: 56px 1fr;
-      grid-template-columns: 260px 1fr 300px;
-      grid-template-areas:
-        "header header header"
-        "sidebar main inspector";
-      height: 100vh;
-      overflow: hidden;
-    }
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+            animation: fadeIn 1s ease-in;
+        }
 
-    /* ─── Header ─────────────────────────────────────────────────── */
-    header {
-      grid-area: header;
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 0 20px;
-      background: rgba(8,15,26,0.85);
-      backdrop-filter: blur(14px);
-      border-bottom: 1px solid var(--border);
-      z-index: 100;
-    }
-    .logo {
-      display: flex; align-items: center; gap: 10px;
-      font-size: 1.1rem; font-weight: 700; letter-spacing: 0.04em;
-      color: var(--accent-cyan);
-      text-shadow: var(--glow-cyan);
-      user-select: none;
-    }
-    .logo svg { width: 28px; height: 28px; }
-    .logo-sub { font-size: 0.68rem; color: var(--text-muted); font-weight: 400; letter-spacing: 0.12em; text-transform: uppercase; }
-    .header-center {
-      display: flex; align-items: center; gap: 16px;
-    }
-    .mesh-status {
-      display: flex; align-items: center; gap: 8px;
-      font-size: 0.78rem; color: var(--text-secondary);
-      background: rgba(0,230,118,0.06);
-      border: 1px solid rgba(0,230,118,0.2);
-      border-radius: 20px;
-      padding: 4px 12px;
-    }
-    .status-dot {
-      width: 7px; height: 7px; border-radius: 50%;
-      background: var(--accent-green);
-      box-shadow: var(--glow-green);
-      animation: pulse 2s ease-in-out infinite;
-    }
-    @keyframes pulse {
-      0%,100% { opacity: 1; transform: scale(1); }
-      50%      { opacity: 0.5; transform: scale(0.8); }
-    }
-    .header-actions { display: flex; align-items: center; gap: 10px; }
-    .btn {
-      display: inline-flex; align-items: center; gap: 6px;
-      padding: 7px 16px; border-radius: 7px;
-      font-size: 0.8rem; font-weight: 600;
-      cursor: pointer; border: none; outline: none;
-      transition: all var(--transition);
-      font-family: var(--font-ui);
-    }
-    .btn-primary {
-      background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan));
-      color: #000;
-    }
-    .btn-primary:hover { filter: brightness(1.2); box-shadow: var(--glow-cyan); transform: translateY(-1px); }
-    .btn-ghost {
-      background: transparent;
-      color: var(--text-secondary);
-      border: 1px solid var(--border);
-    }
-    .btn-ghost:hover { border-color: var(--accent-cyan); color: var(--accent-cyan); box-shadow: var(--glow-cyan); }
-    .btn-danger {
-      background: rgba(255,23,68,0.12);
-      color: var(--accent-red);
-      border: 1px solid rgba(255,23,68,0.3);
-    }
-    .btn-danger:hover { background: rgba(255,23,68,0.22); box-shadow: var(--glow-red); }
-    .btn-success {
-      background: rgba(0,230,118,0.1);
-      color: var(--accent-green);
-      border: 1px solid rgba(0,230,118,0.25);
-    }
-    .btn-success:hover { background: rgba(0,230,118,0.2); box-shadow: var(--glow-green); }
-    .btn-sm { padding: 5px 11px; font-size: 0.74rem; }
-    .btn-icon { padding: 7px; border-radius: 7px; }
-    .badge {
-      display: inline-flex; align-items: center; justify-content: center;
-      min-width: 18px; height: 18px; border-radius: 9px;
-      font-size: 0.65rem; font-weight: 700; padding: 0 5px;
-    }
-    .badge-cyan   { background: rgba(0,229,255,0.15); color: var(--accent-cyan); }
-    .badge-green  { background: rgba(0,230,118,0.15); color: var(--accent-green); }
-    .badge-amber  { background: rgba(255,171,0,0.15);  color: var(--accent-amber); }
-    .badge-red    { background: rgba(255,23,68,0.15);  color: var(--accent-red); }
-    .badge-purple { background: rgba(124,58,237,0.2);  color: #a78bfa; }
+        .header h1 {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            background: linear-gradient(45deg, #00b4d8, #90e0ef);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
 
-    /* ─── Sidebar ─────────────────────────────────────────────────── */
-    .sidebar {
-      grid-area: sidebar;
-      display: flex; flex-direction: column;
-      background: var(--bg-panel);
-      border-right: 1px solid var(--border);
-      overflow-y: auto;
-      overflow-x: hidden;
-    }
-    .sidebar-section { padding: 14px 14px 6px; }
-    .sidebar-label {
-      font-size: 0.65rem; font-weight: 700;
-      text-transform: uppercase; letter-spacing: 0.14em;
-      color: var(--text-muted);
-      margin-bottom: 8px;
-    }
-    .nav-item {
-      display: flex; align-items: center; gap: 10px;
-      padding: 9px 12px; border-radius: 8px;
-      font-size: 0.83rem; font-weight: 500;
-      color: var(--text-secondary);
-      cursor: pointer;
-      transition: all var(--transition);
-      margin-bottom: 2px;
-      position: relative;
-    }
-    .nav-item:hover { background: var(--bg-card); color: var(--text-primary); }
-    .nav-item.active {
-      background: rgba(0,229,255,0.08);
-      color: var(--accent-cyan);
-      border: 1px solid rgba(0,229,255,0.15);
-    }
-    .nav-item.active::before {
-      content: '';
-      position: absolute; left: 0; top: 20%; bottom: 20%;
-      width: 3px; border-radius: 0 3px 3px 0;
-      background: var(--accent-cyan);
-      box-shadow: var(--glow-cyan);
-    }
-    .nav-item svg { width: 16px; height: 16px; flex-shrink: 0; }
-    .nav-spacer { flex: 1; }
-    .agent-list { padding: 0 14px 14px; }
-    .agent-card {
-      display: flex; align-items: center; gap: 10px;
-      padding: 10px 12px;
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: 9px;
-      margin-bottom: 6px;
-      cursor: pointer;
-      transition: all var(--transition);
-      position: relative;
-      overflow: hidden;
-    }
-    .agent-card::after {
-      content: '';
-      position: absolute; inset: 0;
-      background: linear-gradient(135deg, rgba(0,229,255,0.04), transparent);
-      opacity: 0; transition: opacity var(--transition);
-    }
-    .agent-card:hover { border-color: var(--border-bright); transform: translateX(2px); }
-    .agent-card:hover::after { opacity: 1; }
-    .agent-card.selected { border-color: var(--accent-cyan); box-shadow: var(--glow-cyan); }
-    .agent-avatar {
-      width: 32px; height: 32px; border-radius: 8px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 0.75rem; font-weight: 700;
-      flex-shrink: 0;
-    }
-    .agent-info { flex: 1; min-width: 0; }
-    .agent-name { font-size: 0.8rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .agent-role { font-size: 0.68rem; color: var(--text-muted); }
-    .agent-status-indicator {
-      width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
-    }
-    .status-active   { background: var(--accent-green); box-shadow: var(--glow-green); animation: pulse 2s infinite; }
-    .status-idle     { background: var(--accent-amber); }
-    .status-error    { background: var(--accent-red);   box-shadow: var(--glow-red); }
-    .status-offline  { background: var(--text-muted); }
+        .mood-input {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 2rem;
+            border-radius: 15px;
+            margin-bottom: 2rem;
+            transform: translateY(0);
+            transition: transform 0.3s ease;
+        }
 
-    /* ─── Main Canvas ─────────────────────────────────────────────── */
-    .main {
-      grid-area: main;
-      display: flex; flex-direction: column;
-      overflow: hidden;
-    }
-    .main-tabs {
-      display: flex; align-items: center;
-      padding: 0 16px;
-      background: var(--bg-panel);
-      border-bottom: 1px solid var(--border);
-      gap: 2px;
-    }
-    .tab {
-      padding: 14px 18px;
-      font-size: 0.8rem; font-weight: 500;
-      color: var(--text-muted);
-      cursor: pointer;
-      border-bottom: 2px solid transparent;
-      transition: all var(--transition);
-      user-select: none;
-    }
-    .tab:hover { color: var(--text-secondary); }
-    .tab.active { color: var(--accent-cyan); border-bottom-color: var(--accent-cyan); }
-    .tab-spacer { flex: 1; }
-    .main-content { flex: 1; overflow: hidden; position: relative; }
-    .tab-panel { display: none; height: 100%; overflow: auto; }
-    .tab-panel.active { display: flex; flex-direction: column; }
+        .mood-input:hover {
+            transform: translateY(-5px);
+        }
 
-    /* ─── Mesh Visualizer ─────────────────────────────────────────── */
-    #mesh-canvas-wrap {
-      flex: 1; position: relative;
-      display: flex; align-items: center; justify-content: center;
-    }
-    #mesh-canvas {
-      width: 100%; height: 100%;
-      display: block;
-    }
-    .canvas-toolbar {
-      position: absolute; top: 12px; left: 12px;
-      display: flex; gap: 6px;
-    }
-    .canvas-legend {
-      position: absolute; bottom: 12px; left: 12px;
-      display: flex; gap: 16px;
-      background: rgba(8,15,26,0.8);
-      backdrop-filter: blur(10px);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 8px 14px;
-      font-size: 0.72rem;
-    }
-    .legend-item { display: flex; align-items: center; gap: 6px; color: var(--text-secondary); }
-    .legend-dot  { width: 9px; height: 9px; border-radius: 50%; }
-    .canvas-stats {
-      position: absolute; top: 12px; right: 12px;
-      display: flex; flex-direction: column; gap: 6px;
-    }
-    .canvas-stat {
-      background: rgba(8,15,26,0.85);
-      backdrop-filter: blur(10px);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 6px 12px;
-      font-size: 0.72rem;
-      color: var(--text-secondary);
-      text-align: right;
-    }
-    .canvas-stat span { color: var(--accent-cyan); font-weight: 700; font-family: var(--font-mono); }
+        .mood-slider {
+            width: 100%;
+            margin: 2rem 0;
+            -webkit-appearance: none;
+            height: 15px;
+            border-radius: 10px;
+            background: linear-gradient(90deg, #ff0000, #ffff00, #00ff00);
+            outline: none;
+        }
 
-    /* ─── Task Board ──────────────────────────────────────────────── */
-    .task-board {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 12px;
-      padding: 16px;
-      overflow-y: auto;
-      height: 100%;
-    }
-    .task-column {
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      display: flex; flex-direction: column;
-      overflow: hidden;
-    }
-    .task-column-header {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 12px 14px;
-      border-bottom: 1px solid var(--border);
-      font-size: 0.78rem; font-weight: 700;
-    }
-    .task-column-body { flex: 1; overflow-y: auto; padding: 10px; display: flex; flex-direction: column; gap: 8px; }
-    .task-card {
-      background: var(--bg-panel);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 10px 12px;
-      cursor: pointer;
-      transition: all var(--transition);
-    }
-    .task-card:hover { border-color: var(--border-bright); transform: translateY(-1px); box-shadow: 0 4px 16px rgba(0,0,0,0.4); }
-    .task-card-title { font-size: 0.8rem; font-weight: 600; margin-bottom: 6px; }
-    .task-card-meta  { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
-    .task-priority {
-      font-size: 0.65rem; font-weight: 700;
-      padding: 2px 7px; border-radius: 4px;
-    }
-    .priority-critical { background: rgba(255,23,68,0.15);  color: var(--accent-red); }
-    .priority-high     { background: rgba(255,171,0,0.15);  color: var(--accent-amber); }
-    .priority-medium   { background: rgba(0,229,255,0.12);  color: var(--accent-cyan); }
-    .priority-low      { background: rgba(0,230,118,0.10);  color: var(--accent-green); }
-    .task-progress-bar {
-      height: 3px; border-radius: 2px;
-      background: rgba(255,255,255,0.07);
-      margin-top: 8px; overflow: hidden;
-    }
-    .task-progress-fill {
-      height: 100%; border-radius: 2px;
-      background: linear-gradient(90deg, var(--accent-blue), var(--accent-cyan));
-      transition: width 0.5s ease;
-    }
+        .mood-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            background: #fff;
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(0,0,0,0.3);
+            transition: transform 0.2s;
+        }
 
-    /* ─── Logs Panel ──────────────────────────────────────────────── */
-    .logs-panel {
-      display: flex; flex-direction: column;
-      height: 100%; overflow: hidden;
-    }
-    .logs-toolbar {
-      display: flex; align-items: center; gap: 8px;
-      padding: 10px 16px;
-      border-bottom: 1px solid var(--border);
-      background: var(--bg-panel);
-    }
-    .logs-filter {
-      display: flex; gap: 4px;
-    }
-    .filter-chip {
-      padding: 4px 10px; border-radius: 20px;
-      font-size: 0.72rem; font-weight: 600;
-      cursor: pointer; transition: all var(--transition);
-      border: 1px solid transparent;
-      color: var(--text-muted);
-    }
-    .filter-chip:hover { color: var(--text-secondary); }
-    .filter-chip.active { border-color: var(--accent-cyan); color: var(--accent-cyan); background: rgba(0,229,255,0.07); }
-    .logs-search {
-      flex: 1;
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: 7px;
-      padding: 6px 12px;
-      color: var(--text-primary);
-      font-size: 0.8rem;
-      font-family: var(--font-ui);
-      outline: none;
-      transition: border-color var(--transition);
-    }
-    .logs-search:focus { border-color: var(--accent-cyan); }
-    .logs-search::placeholder { color: var(--text-muted); }
-    .log-stream {
-      flex: 1; overflow-y: auto;
-      padding: 10px 16px;
-      font-family: var(--font-mono);
-      font-size: 0.75rem;
-      line-height: 1.7;
-    }
-    .log-entry {
-      display: flex; align-items: flex-start; gap: 10px;
-      padding: 3px 0;
-      border-bottom: 1px solid rgba(255,255,255,0.025);
-      animation: logSlide 0.3s ease;
-    }
-    @keyframes logSlide {
-      from { opacity: 0; transform: translateX(-8px); }
-      to   { opacity: 1; transform: translateX(0); }
-    }
-    .log-time  { color: var(--text-muted); white-space: nowrap; flex-shrink: 0; }
-    .log-level { font-weight: 700; flex-shrink: 0; width: 42px; }
-    .log-level.INFO  { color: var(--accent-cyan); }
-    .log-level.WARN  { color: var(--accent-amber); }
-    .log-level.ERROR { color: var(--accent-red); }
-    .log-level.DEBUG { color: var(--text-muted); }
-    .log-level.MESH  { color: var(--accent-purple); }
-    .log-agent { color: var(--accent-blue); flex-shrink: 0; }
-    .log-msg   { color: var(--text-secondary); word-break: break-word; }
+        .mood-slider::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+        }
 
-    /* ─── Metrics Panel ───────────────────────────────────────────── */
-    .metrics-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-      gap: 14px;
-      padding: 16px;
-    }
-    .metric-card {
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 16px;
-      transition: all var(--transition);
-    }
-    .metric-card:hover { border-color: var(--border-bright); box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
-    .metric-label { font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 8px; }
-    .metric-value {
-      font-size: 2rem; font-weight: 800;
-      font-family: var(--font-mono);
-      line-height: 1;
-      margin-bottom: 6px;
-    }
-    .metric-delta {
-      font-size: 0.72rem;
-      display: flex; align-items: center; gap: 4px;
-    }
-    .delta-up   { color: var(--accent-green); }
-    .delta-down { color: var(--accent-red); }
-    .sparkline {
-      width: 100%; height: 36px;
-      margin-top: 10px;
-    }
-    .sparkline canvas { width: 100%; height: 100%; }
+        .mood-chart {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 2rem;
+            border-radius: 15px;
+            height: 400px;
+            position: relative;
+        }
 
-    /* ─── Inspector Sidebar ───────────────────────────────────────── */
-    .inspector {
-      grid-area: inspector;
-      display: flex; flex-direction: column;
-      background: var(--bg-panel);
-      border-left: 1px solid var(--border);
-      overflow-y: auto;
-    }
-    .inspector-header {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 14px 16px;
-      border-bottom: 1px solid var(--border);
-      font-size: 0.82rem; font-weight: 700;
-    }
-    .inspector-body { flex: 1; padding: 14px; }
-    .inspector-section { margin-bottom: 20px; }
-    .inspector-section-title {
-      font-size: 0.67rem; font-weight: 700;
-      text-transform: uppercase; letter-spacing: 0.12em;
-      color: var(--text-muted);
-      margin-bottom: 10px;
-      display: flex; align-items: center; gap: 6px;
-    }
-    .inspector-section-title::after {
-      content: '';
-      flex: 1; height: 1px;
-      background: var(--border);
-    }
-    .prop-row {
-      display: flex; align-items: flex-start; justify-content: space-between;
-      padding: 6px 0;
-      border-bottom: 1px solid rgba(255,255,255,0.03);
-      gap: 10px;
-    }
-    .prop-key   { font-size: 0.74rem; color: var(--text-muted); flex-shrink: 0; }
-    .prop-value { font-size: 0.74rem; color: var(--text-primary); font-family: var(--font-mono); text-align: right; word-break: break-all; }
-    .prop-value.cyan   { color: var(--accent-cyan); }
-    .prop-value.green  { color: var(--accent-green); }
-    .prop-value.amber  { color: var(--accent-amber); }
-    .prop-value.red    { color: var(--accent-red); }
-    .capability-list { display: flex; flex-wrap: wrap; gap: 5px; }
-    .capability-tag {
-      font-size: 0.67rem; padding: 3px 8px;
-      border-radius: 5px;
-      background: rgba(124,58,237,0.15);
-      color: #a78bfa;
-      border: 1px solid rgba(124,58,237,0.25);
-    }
-    .health-bar-wrap { margin-top: 4px; }
-    .health-bar {
-      height: 6px; border-radius: 3px;
-      background: rgba(255,255,255,0.07);
-      overflow: hidden;
-    }
-    .health-fill {
-      height: 100%; border-radius: 3px;
-      transition: width 1s ease;
-    }
-    .health-label {
-      display: flex; justify-content: space-between;
-      font-size: 0.68rem; color: var(--text-muted);
-      margin-bottom: 4px;
-    }
-    .msg-queue {
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      overflow: hidden;
-    }
-    .msg-item {
-      padding: 8px 12px;
-      border-bottom: 1px solid var(--border);
-      font-size: 0.72rem;
-      display: flex; align-items: center; justify-content: space-between;
-    }
-    .msg-item:last-child { border-bottom: none; }
-    .msg-type { font-family: var(--font-mono); color: var(--accent-cyan); }
-    .msg-from { color: var(--text-muted); }
-    .cmd-input-wrap {
-      padding: 14px;
-      border-top: 1px solid var(--border);
-    }
-    .cmd-label { font-size: 0.67rem; color: var(--text-muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.1em; }
-    .cmd-row { display: flex; gap: 6px; }
-    .cmd-input {
-      flex: 1;
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: 7px;
-      padding: 7px 10px;
-      color: var(--text-primary);
-      font-size: 0.78rem;
-      font-family: var(--font-mono);
-      outline: none;
-      transition: border-color var(--transition);
-    }
-    .cmd-input:focus { border-color: var(--accent-cyan); }
-    .cmd-input::placeholder { color: var(--text-muted); }
+        .btn {
+            background: linear-gradient(45deg, #00b4d8, #90e0ef);
+            border: none;
+            padding: 1rem 2rem;
+            color: #fff;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
 
-    /* ─── Deploy Modal ────────────────────────────────────────────── */
-    .modal-overlay {
-      display: none;
-      position: fixed; inset: 0; z-index: 1000;
-      background: rgba(2,4,8,0.85);
-      backdrop-filter: blur(6px);
-      align-items: center; justify-content: center;
-    }
-    .modal-overlay.open { display: flex; }
-    .modal {
-      background: var(--bg-card);
-      border: 1px solid var(--border-bright);
-      border-radius: 14px;
-      width: 560px;
-      max-height: 80vh;
-      display: flex; flex-direction: column;
-      overflow: hidden;
-      box-shadow: 0 24px 80px rgba(0,0,0,0.7), var(--glow-cyan);
-      animation: modalIn 0.3s cubic-bezier(0.34,1.56,0.64,1);
-    }
-    @keyframes modalIn {
-      from { opacity: 0; transform: scale(0.88) translateY(20px); }
-      to   { opacity: 1; transform: scale(1) translateY(0); }
-    }
-    .modal-header {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 18px 20px;
-      border-bottom: 1px solid var(--border);
-    }
-    .modal-title { font-size: 1rem; font-weight: 700; color: var(--accent-cyan); }
-    .modal-body { flex: 1; overflow-y: auto; padding: 20px; }
-    .modal-footer {
-      display: flex; justify-content: flex-end; gap: 8px;
-      padding: 14px 20px;
-      border-top: 1px solid var(--border);
-    }
-    .form-group { margin-bottom: 16px; }
-    .form-label { font-size: 0.76rem; color: var(--text-secondary); margin-bottom: 6px; display: block; font-weight: 500; }
-    .form-input, .form-select, .form-textarea {
-      width: 100%;
-      background: var(--bg-panel);
-      border: 1px solid var(--border);
-      border-radius: 7px;
-      padding: 9px 12px;
-      color: var(--text-primary);
-      font-size: 0.8rem;
-      font-family: var(--font-ui);
-      outline: none;
-      transition: border-color var(--transition);
-    }
-    .form-input:focus, .form-select:focus, .form-textarea:focus { border-color: var(--accent-cyan); }
-    .form-select { cursor: pointer; }
-    .form-select option { background: var(--bg-card); }
-    .form-textarea { resize: vertical; min-height: 80px; font-family: var(--font-mono); font-size: 0.76rem; }
-    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-    .capability-checkboxes { display: flex; flex-wrap: wrap; gap: 8px; }
-    .cap-checkbox {
-      display: flex; align-items: center; gap: 6px;
-      padding: 5px 10px;
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 0.74rem;
-      color: var(--text-muted);
-      transition: all var(--transition);
-      user-select: none;
-    }
-    .cap-checkbox input { display: none; }
-    .cap-checkbox:has(input:checked) { border-color: var(--accent-purple); color: #a78bfa; background: rgba(124,58,237,0.1); }
-    .cap-checkbox:hover { border-color: var(--text-muted); color: var(--text-secondary); }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,180,216,0.3);
+        }
 
-    /* ─── Toast Notifications ─────────────────────────────────────── */
-    #toast-container {
-      position: fixed; bottom: 24px; right: 24px;
-      z-index: 2000;
-      display: flex; flex-direction: column; gap: 8px;
-      pointer-events: none;
-    }
-    .toast {
-      display: flex; align-items: center; gap: 10px;
-      padding: 12px 18px;
-      border-radius: 10px;
-      font-size: 0.8rem;
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      box-shadow: 0 8px 32px rgba(0,0,0,0.5);
-      pointer-events: auto;
-      animation: toastIn 0.35s cubic-bezier(0.34,1.56,0.64,1);
-      min-width: 240px; max-width: 360px;
-    }
-    .toast.removing { animation: toastOut 0.3s ease forwards; }
-    @keyframes toastIn  { from { opacity:0; transform: translateX(40px) scale(0.9); } to { opacity:1; transform: translateX(0) scale(1); } }
-    @keyframes toastOut { from { opacity:1; transform: translateX(0); } to { opacity:0; transform: translateX(40px); } }
-    .toast-success { border-color: rgba(0,230,118,0.3); }
-    .toast-error   { border-color: rgba(255,23,68,0.3); }
-    .toast-warn    { border-color: rgba(255,171,0,0.3); }
-    .toast-info    { border-color: rgba(0,229,255,0.3); }
-    .toast-icon { font-size: 1rem; flex-shrink: 0; }
-    .toast-msg { flex: 1; color: var(--text-primary); }
-    .toast-close { color: var(--text-muted); cursor: pointer; font-size: 1.1rem; line-height: 1; flex-shrink: 0; }
-    .toast-close:hover { color: var(--text-primary); }
+        .streak-counter {
+            text-align: center;
+            font-size: 1.2rem;
+            margin-top: 2rem;
+            color: #90e0ef;
+        }
 
-    /* ─── Tooltip ─────────────────────────────────────────────────── */
-    [data-tip] { position: relative; }
-    [data-tip]::after {
-      content: attr(data-tip);
-      position: absolute; bottom: calc(100% + 6px); left: 50%; transform: translateX(-50%);
-      background: var(--bg-card);
-      border: 1px solid var(--border-bright);
-      color: var(--text-primary);
-      font-size: 0.7rem;
-      padding: 5px 10px;
-      border-radius: 6px;
-      white-space: nowrap;
-      pointer-events: none;
-      opacity: 0; transition: opacity 0.2s;
-      z-index: 999;
-    }
-    [data-tip]:hover::after { opacity: 1; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
 
-    /* ─── Responsive tweaks ───────────────────────────────────────── */
-    @media (max-width: 1100px) {
-      .shell { grid-template-columns: 220px 1fr 260px; }
-    }
-    @media (max-width: 900px) {
-      .shell {
-        grid-template-areas: "header" "main";
-        grid-template-columns: 1fr;
-        grid-template-rows: 56px 1fr;
-      }
-      .sidebar, .inspector { display: none; }
-    }
-
-    /* ─── Utility ─────────────────────────────────────────────────── */
-    .flex { display: flex; }
-    .flex-col { flex-direction: column; }
-    .items-center { align-items: center; }
-    .gap-6 { gap: 6px; }
-    .gap-8 { gap: 8px; }
-    .ml-auto { margin-left: auto; }
-    .text-cyan   { color: var(--accent-cyan); }
-    .text-green  { color: var(--accent-green); }
-    .text-amber  { color: var(--accent-amber); }
-    .text-red    { color: var(--accent-red); }
-    .text-purple { color: #a78bfa; }
-    .mono { font-family: var(--font-mono); }
-    .hidden { display: none !important; }
-    .divider { height: 1px; background: var(--border); margin: 10px 0; }
-  </style>
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+    </style>
 </head>
 <body>
-
-<!-- Background decoration -->
-<div class="bg-grid"></div>
-<div class="bg-radial"></div>
-
-<!-- ═══════════════════════════════ SHELL ═══════════════════════════════ -->
-<div class="shell">
-
-  <!-- ── HEADER ── -->
-  <header>
-    <div class="logo">
-      <!-- Hex mesh icon -->
-      <svg viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <polygon points="14,2 24,8 24,20 14,26 4,20 4,8" stroke="#00e5ff" stroke-width="1.5" fill="none" opacity="0.5"/>
-        <circle cx="14" cy="14" r="3" fill="#00e5ff"/>
-        <circle cx="14" cy="4"  r="2" fill="#1565ff"/>
-        <circle cx="23" cy="9"  r="2" fill="#1565ff"/>
-        <circle cx="23" cy="19" r="2" fill="#1565ff"/>
-        <circle cx="14" cy="24" r="2" fill="#1565ff"/>
-        <circle cx="5"  cy="19" r="2" fill="#1565ff"/>
-        <circle cx="5"  cy="9"  r="2" fill="#1565ff"/>
-        <line x1="14" y1="14" x2="14" y2="4"  stroke="#00e5ff" stroke-width="0.8" opacity="0.6"/>
-        <line x1="14" y1="14" x2="23" y2="9"  stroke="#00e5ff" stroke-width="0.8" opacity="0.6"/>
-        <line x1="14" y1="14" x2="23" y2="19" stroke="#00e5ff" stroke-width="0.8" opacity="0.6"/>
-        <line x1="14" y1="14" x2="14" y2="24" stroke="#00e5ff" stroke-width="0.8" opacity="0.6"/>
-        <line x1="14" y1="14" x2="5"  y2="19" stroke="#00e5ff" stroke-width="0.8" opacity="0.6"/>
-        <line x1="14" y1="14" x2="5"  y2="9"  stroke="#00e5ff" stroke-width="0.8" opacity="0.6"/>
-      </svg>
-      <div>
-        <div>SwarMesh</div>
-        <div class="logo-sub">Decentralized · Multi-Agent · Coordination Mesh</div>
-      </div>
-    </div>
-
-    <div class="header-center">
-      <div class="mesh-status">
-        <div class="status-dot"></div>
-        <span id="hdr-mesh-status">Mesh Online</span>
-      </div>
-      <div style="font-size:0.75rem; color:var(--text-muted); font-family:var(--font-mono)" id="hdr-uptime">uptime 00:00:00</div>
-    </div>
-
-    <div class="header-actions">
-      <button class="btn btn-ghost btn-sm" onclick="openDeployModal()" data-tip="Deploy new agent">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-        Deploy Agent
-      </button>
-      <button class="btn btn-ghost btn-sm" onclick="broadcastAll()" data-tip="Broadcast to all agents">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12A10 10 0 1 1 12 2"/><path d="M22 2L11 13"/><path d="M22 2L15 22L11 13L2 9Z"/></svg>
-        Broadcast
-      </button>
-      <button class="btn btn-danger btn-sm" onclick="emergencyStop()" data-tip="Emergency stop all agents">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
-        E-Stop
-      </button>
-      <button class="btn btn-icon btn-ghost" onclick="toggleTheme()" data-tip="Toggle theme">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
-      </button>
-    </div>
-  </header>
-
-  <!-- ── SIDEBAR ── -->
-  <aside class="sidebar">
-    <div class="sidebar-section">
-      <div class="sidebar-label">Navigation</div>
-      <div class="nav-item active" onclick="switchNav(this,'mesh')">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><circle cx="4" cy="6" r="2"/><circle cx="20" cy="6" r="2"/><circle cx="4" cy="18" r="2"/><circle cx="20" cy="18" r="2"/><line x1="6" y1="7" x2="10" y2="11"/><line x1="18" y1="7" x2="14" y2="11"/><line x1="6" y1="17" x2="10" y2="13"/><line x1="18" y1="17" x2="14" y2="13"/></svg>
-        Mesh Topology
-        <span class="badge badge-cyan ml-auto" id="nav-agent-count">0</span>
-      </div>
-      <div class="nav-item" onclick="switchNav(this,'tasks')">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="14" x2="10" y2="16"/><line x1="10" y1="16" x2="14" y2="13"/></svg>
-        Task Board
-        <span class="badge badge-amber ml-auto" id="nav-task-count">0</span>
-      </div>
-      <div class="nav-item" onclick="switchNav(this,'logs')">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
-        Event Logs
-        <span class="badge badge-red ml-auto" id="nav-log-count">0</span>
-      </div>
-      <div class="nav-item" onclick="switchNav(this,'metrics')">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-        Metrics
-      </div>
-    </div>
-
-    <div class="divider" style="margin:0 14px"></div>
-
-    <div class="sidebar-section">
-      <div class="sidebar-label">Active Agents <span class="badge badge-green" id="sidebar-active-count">0</span></div>
-    </div>
-    <div class="agent-list" id="agent-list"></div>
-
-    <div class="nav-spacer"></div>
-    <div class="sidebar-section">
-      <div style="font-size:0.68rem;color:var(--text-muted);text-align:center;padding:8px 0">
-        SwarMesh v2.4.1 &nbsp;·&nbsp; MIT License
-      </div>
-    </div>
-  </aside>
-
-  <!-- ── MAIN CONTENT ── -->
-  <main class="main">
-    <div class="main-tabs">
-      <div class="tab active" id="tab-mesh"    onclick="switchTab('mesh')">Mesh Topology</div>
-      <div class="tab"        id="tab-tasks"   onclick="switchTab('tasks')">Task Board</div>
-      <div class="tab"        id="tab-logs"    onclick="switchTab('logs')">Event Logs</div>
-      <div class="tab"        id="tab-metrics" onclick="switchTab('metrics')">Metrics</div>
-      <div class="tab-spacer"></div>
-      <div style="padding:0 8px;display:flex;align-items:center;gap:8px">
-        <span style="font-size:0.72rem;color:var(--text-muted)" id="msg-throughput">0 msg/s</span>
-      </div>
-    </div>
-
-    <div class="main-content">
-      <!-- MESH TAB -->
-      <div class="tab-panel active" id="panel-mesh">
-        <div id="mesh-canvas-wrap">
-          <canvas id="mesh-canvas"></canvas>
-          <div class="canvas-toolbar">
-            <button class="btn btn-ghost btn-sm" onclick="resetCamera()" data-tip="Reset view">⟳ Reset</button>
-            <button class="btn btn-ghost btn-sm" onclick="togglePhysics()" data-tip="Toggle physics simulation" id="physics-btn">⚡ Physics</button>
-            <button class="btn btn-ghost btn-sm" onclick="toggleLabels()" data-tip="Toggle labels">🏷 Labels</button>
-          </div>
-          <div class="canvas-legend">
-            <div class="legend-item"><div class="legend-dot" style="background:var(--accent-green)"></div>Active</div>
-            <div class="legend-item"><div class="legend-dot" style="background:var(--accent-amber)"></div>Idle</div>
-            <div class="legend-item"><div class="legend-dot" style="background:var(--accent-red)"></div>Error</div>
-            <div class="legend-item"><div class="legend-dot" style="background:var(--text-muted)"></div>Offline</div>
-            <div class="legend-item"><div class="legend-dot" style="background:var(--accent-cyan);opacity:0.5;border-radius:0;width:18px;height:2px"></div>Link</div>
-          </div>
-          <div class="canvas-stats">
-            <div class="canvas-stat">Agents: <span id="cs-agents">0</span></div>
-            <div class="canvas-stat">Links: <span id="cs-links">0</span></div>
-            <div class="canvas-stat">Messages: <span id="cs-msgs">0</span></div>
-            <div class="canvas-stat">Latency: <span id="cs-latency">0ms</span></div>
-          </div>
+    <div class="container">
+        <div class="header">
+            <h1>MoodMirror</h1>
+            <p>Track your emotional journey, one day at a time</p>
         </div>
-      </div>
 
-      <!-- TASKS TAB -->
-      <div class="tab-panel" id="panel-tasks">
-        <div style="display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--border)">
-          <span style="font-size:0.82rem;font-weight:600">Distributed Task Queue</span>
-          <div class="ml-auto" style="display:flex;gap:8px">
-            <button class="btn btn-ghost btn-sm" onclick="addRandomTask()">+ Add Task</button>
-            <button class="btn btn-ghost btn-sm" onclick="clearCompletedTasks()">Clear Done</button>
-          </div>
+        <div class="mood-input">
+            <h2>How are you feeling today?</h2>
+            <input type="range" min="1" max="10" value="5" class="mood-slider" id="moodSlider">
+            <div id="moodValue" style="text-align: center; margin: 1rem 0;">Neutral</div>
+            <button class="btn" onclick="saveMood()">Save Mood</button>
         </div>
-        <div class="task-board" id="task-board">
-          <div class="task-column">
-            <div class="task-column-header">
-              <span>📋 Queued</span>
-              <span class="badge badge-cyan" id="col-queued-count">0</span>
-            </div>
-            <div class="task-column-body" id="col-queued"></div>
-          </div>
-          <div class="task-column">
-            <div class="task-column-header">
-              <span>⚙️ Running</span>
-              <span class="badge badge-amber" id="col-running-count">0</span>
-            </div>
-            <div class="task-column-body" id="col-running"></div>
-          </div>
-          <div class="task-column">
-            <div class="task-column-header">
-              <span>✅ Completed</span>
-              <span class="badge badge-green" id="col-completed-count">0</span>
-            </div>
-            <div class="task-column-body" id="col-completed"></div>
-          </div>
-          <div class="task-column">
-            <div class="task-column-header">
-              <span>❌ Failed</span>
-              <span class="badge badge-red" id="col-failed-count">0</span>
-            </div>
-            <div class="task-column-body" id="col-failed"></div>
-          </div>
-        </div>
-      </div>
 
-      <!-- LOGS TAB -->
-      <div class="tab-panel" id="panel-logs">
-        <div class="logs-panel">
-          <div class="logs-toolbar">
-            <div class="logs-filter">
-              <div class="filter-chip active" onclick="setLogFilter(this,'ALL')">All</div>
-              <div class="filter-chip" onclick="setLogFilter(this,'INFO')">Info</div>
-              <div class="filter-chip" onclick="setLogFilter(this,'WARN')">Warn</div>
-              <div class="filter-chip" onclick="setLogFilter(this,'ERROR')">Error</div>
-              <div class="filter-chip" onclick="setLogFilter(this,'MESH')">Mesh</div>
-              <div class="filter-chip" onclick="setLogFilter(this,'DEBUG')">Debug</div>
-            </div>
-            <input class="logs-search" type="text" placeholder="Search logs…" id="log-search" oninput="filterLogs()" />
-            <button class="btn btn-ghost btn-sm" onclick="clearLogs()">Clear</button>
-            <button class="btn btn-ghost btn-sm" onclick="exportLogs()">Export</button>
-          </div>
-          <div class="log-stream" id="log-stream"></div>
+        <div class="mood-chart">
+            <canvas id="moodChart"></canvas>
         </div>
-      </div>
 
-      <!-- METRICS TAB -->
-      <div class="tab-panel" id="panel-metrics">
-        <div style="padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
-          <span style="font-size:0.82rem;font-weight:600">System Metrics</span>
-          <span style="font-size:0.72rem;color:var(--text-muted)" id="metrics-updated">Last updated: —</span>
+        <div class="streak-counter">
+            <h3>Current Streak: <span id="streakCount">0</span> days</h3>
+            <p>Keep tracking to maintain your streak!</p>
         </div>
-        <div style="overflow-y:auto;flex:1">
-          <div class="metrics-grid" id="metrics-grid"></div>
-          <div style="padding:0 16px 16px">
-            <div style="font-size:0.67rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:10px">Agent Performance Breakdown</div>
-            <div id="agent-perf-table"></div>
-          </div>
-        </div>
-      </div>
     </div>
-  </main>
 
-  <!-- ── INSPECTOR ── -->
-  <aside class="inspector" id="inspector">
-    <div class="inspector-header">
-      <span id="inspector-title">Inspector</span>
-      <button class="btn btn-ghost btn-sm" onclick="clearInspector()">Clear</button>
-    </div>
-    <div class="inspector-body" id="inspector-body">
-      <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:200px;color:var(--text-muted);font-size:0.8rem;text-align:center;gap:10px">
-        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-        Click an agent node or card<br>to inspect its details
-      </div>
-    </div>
-    <div class="cmd-input-wrap">
-      <div class="cmd-label">Send Command</div>
-      <div class="cmd-row">
-        <input class="cmd-input" type="text" id="cmd-input" placeholder="PING | PAUSE | RESUME | cmd…" />
-        <button class="btn btn-primary btn-sm" onclick="sendCommand()">Send</button>
-      </div>
-    </div>
-  </aside>
-
-</div><!-- /shell -->
-
-<!-- ═══════════════════════════════ DEPLOY MODAL ════════════════════════ -->
-<div class="modal-overlay" id="deploy-modal">
-  <div class="modal">
-    <div class="modal-header">
-      <span class="modal-title">Deploy New Agent</span>
-      <button class="btn btn-ghost btn-sm" onclick="closeDeployModal()">✕</button>
-    </div>
-    <div class="modal-body">
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">Agent Name *</label>
-          <input class="form-input" type="text" id="f-name" placeholder="agent-alpha-01" />
-        </div>
-        <div class="form-group">
-          <label class="form-label">Role *</label>
-          <select class="form-select" id="f-role">
-            <option value="coordinator">Coordinator</option>
-            <option value="worker">Worker</option>
-            <option value="monitor">Monitor</option>
-            <option value="gateway">Gateway</option>
-            <option value="storage">Storage</option>
-            <option value="inference">Inference</option>
-          </select>
-        </div>
-      </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">Priority</label>
-          <select class="form-select" id="f-priority">
-            <option value="low">Low</option>
-            <option value="medium" selected>Medium</option>
-            <option value="high">High</option>
-            <option value="critical">Critical</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Max Concurrent Tasks</label>
-          <input class="form-input" type="number" id="f-concurrency" value="4" min="1" max="64" />
-        </div>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Capabilities</label>
-        <div class="capability-checkboxes">
-          <label class="cap-checkbox"><input type="checkbox" value="compute" checked> compute</label>
-          <label class="cap-checkbox"><input type="checkbox" value="storage"> storage</label>
-          <label class="cap-checkbox"><input type="checkbox" value="network"> network</label>
-          <label class="cap-checkbox"><input type="checkbox" value="ml-inference"> ml-inference</label>
-          <label class="cap-checkbox"><input type="checkbox" value="scheduling"> scheduling</label>
-          <label class="cap-checkbox"><input type="checkbox" value="consensus"> consensus</label>
-          <label class="cap-checkbox"><input type="checkbox" value="streaming"> streaming</label>
-          <label class="cap-checkbox"><input type="checkbox" value="encryption"> encryption</label>
-        </div>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Initial Config (JSON)</label>
-        <textarea class="form-textarea" id="f-config" placeholder='{ "heartbeat_ms": 1000, "retry_limit": 3 }'></textarea>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Peer Connections (comma-separated agent IDs)</label>
-        <input class="form-input" type="text" id="f-peers" placeholder="agent-001, agent-002" />
-      </div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn btn-ghost" onclick="closeDeployModal()">Cancel</button>
-      <button class="btn btn-primary" onclick="deployAgent()">Deploy Agent</button>
-    </div>
-  </div>
-</div>
-
-<!-- Toast container -->
-<div id="toast-container"></div>
-
-<!-- ═══════════════════════════════ SCRIPTS ══════════════════════════════ -->
-<script>
-'use strict';
-
-// ─── Global State ────────────────────────────────────────────────────────────
-const STATE = {
-  agents: [],
-  tasks:  [],
-  logs:   [],
-  metrics: {
-    totalMessages: 0,
-    msgPerSec: 0,
-    avgLatency: 0,
-    uptime: 0,
-    meshHealth: 100,
-    throughput: 0,
-  },
-  selectedAgent: null,
-  logFilter: 'ALL',
-  logSearch: '',
-  physicsEnabled: true,
-  showLabels: true,
-  camera: { x: 0, y: 0, zoom: 1 },
-  dragging: null,
-  hoveredNode: null,
-  animFrame: null,
-  startTime: Date.now(),
-  msgCountWindow: [],
-};
-
-// ─── Palette ─────────────────────────────────────────────────────────────────
-const COLORS = {
-  active:  '#00e676', idle: '#ffab00', error: '#ff1744', offline: '#3d6680',
-  cyan:    '#00e5ff', blue: '#1565ff', purple: '#7c3aed',
-  link:    'rgba(0,229,255,0.18)', linkActive: 'rgba(0,229,255,0.55)',
-  bg:      '#020408',
-};
-
-const ROLES = {
-  coordinator: { color: '#a78bfa', emoji: '🧠' },
-  worker:      { color: '#00e5ff', emoji: '⚙️' },
-  monitor:     { color: '#00e676', emoji: '👁' },
-  gateway:     { color: '#ffab00', emoji: '🔀' },
-  storage:     { color: '#fb923c', emoji: '💾' },
-  inference:   { color: '#f472b6', emoji: '🤖' },
-};
-
-const TASK_TYPES = [
-  'data-aggregation','model-inference','consensus-round','health-check',
-  'state-sync','shard-rebalance','encryption-pass','log-compaction',
-  'topology-discovery','load-balance','failover-check','metrics-flush',
-];
-
-// ─── Agent Factory ────────────────────────────────────────────────────────────
-let _agentCounter = 1;
-function createAgent(opts = {}) {
-  const id   = opts.id   || `agent-${String(_agentCounter++).padStart(3,'0')}`;
-  const role = opts.role || ['coordinator','worker','worker','worker','monitor','gateway'][Math.floor(Math.random()*6)];
-  const canvas = document.getElementById('mesh-canvas');
-  const cx = canvas.width / 2, cy = canvas.height / 2;
-  return {
-    id,
-    name:         opts.name || id,
-    role,
-    status:       opts.status || 'active',
-    capabilities: opts.capabilities || ['compute','network'],
-    priority:     opts.priority || 'medium',
-    concurrency:  opts.concurrency || 4,
-    // physics
-    x:  opts.x || cx + (Math.random()-0.5)*400,
-    y:  opts.y || cy + (Math.random()-0.5)*300,
-    vx: 0, vy: 0,
-    radius: 20,
-    // metrics
-    cpu:      Math.random()*80 + 10,
-    memory:   Math.random()*70 + 20,
-    tasks:    Math.floor(Math.random()*5),
-    messages: Math.floor(Math.random()*1000),
-    latency:  Math.floor(Math.random()*50+5),
-    uptime:   Math.floor(Math.random()*86400),
-    peers:    opts.peers || [],
-    pulsePhase: Math.random()*Math.PI*2,
-    history: { cpu: [], mem: [] },
-  };
-}
-
-// ─── Bootstrap Agents ─────────────────────────────────────────────────────────
-function initAgents() {
-  const roles = ['coordinator','worker','worker','worker','worker','monitor','gateway','storage','inference','worker'];
-  roles.forEach(role => STATE.agents.push(createAgent({ role })));
-  // wire peers
-  STATE.agents.forEach(a => {
-    const count = Math.floor(Math.random()*3)+1;
-    const others = STATE.agents.filter(b => b.id !== a.id);
-    a.peers = shuffle(others).slice(0, count).map(b => b.id);
-  });
-  refreshAgentList();
-  refreshCounts();
-}
-
-// ─── Tasks ────────────────────────────────────────────────────────────────────
-let _taskCounter = 1;
-function createTask(opts = {}) {
-  return {
-    id:       `task-${String(_taskCounter++).padStart(4,'0')}`,
-    type:     opts.type     || TASK_TYPES[Math.floor(Math.random()*TASK_TYPES.length)],
-    status:   opts.status   || 'queued',
-    priority: opts.priority || ['low','medium','high','critical'][Math.floor(Math.random()*4)],
-    agent:    opts.agent    || null,
-    progress: opts.progress || 0,
-    created:  Date.now(),
-  };
-}
-
-function initTasks() {
-  for (let i=0; i<12; i++) {
-    const t = createTask();
-    if (i < 3)       t.status = 'running',   t.progress = Math.floor(Math.random()*90+5);
-    else if (i < 6)  t.status = 'completed', t.progress = 100;
-    else if (i < 7)  t.status = 'failed',    t.progress = Math.floor(Math.random()*60);
-    if (t.status === 'running' || t.status === 'completed' || t.status === 'failed') {
-      t.agent = STATE.agents[Math.floor(Math.random()*STATE.agents.length)]?.id;
-    }
-    STATE.tasks.push(t);
-  }
-  renderTaskBoard();
-}
-
-function renderTaskBoard() {
-  ['queued','running','completed','failed'].forEach(status => {
-    const col   = document.getElementById(`col-${status}`);
-    const count = document.getElementById(`col-${status}-count`);
-    const items = STATE.tasks.filter(t => t.status === status);
-    count.textContent = items.length;
-    col.innerHTML = items.map(t => `
-      <div class="task-card" onclick="inspectTask('${t.id}')">
-        <div class="task-card-title">${t.type}</div>
-        <div class="task-card-meta">
-          <span class="task-priority priority-${t.priority}">${t.priority.toUpperCase()}</span>
-          <span class="badge badge-cyan" style="font-size:0.62rem">${t.id}</span>
-          ${t.agent ? `<span style="font-size:0.67rem;color:var(--text-muted)">${t.agent}</span>` : ''}
-        </div>
-        <div class="task-progress-bar">
-          <div class="task-progress-fill" style="width:${t.progress}%"></div>
-        </div>
-      </div>
-    `).join('');
-  });
-  const total = STATE.tasks.length;
-  document.getElementById('nav-task-count').textContent = total;
-}
-
-function addRandomTask() {
-  const t = createTask();
-  STATE.tasks.push(t);
-  renderTaskBoard();
-  addLog('INFO', 'TaskQueue', `New task queued: ${t.type} [${t.id}]`);
-  toast('info', `Task queued: ${t.type}`);
-}
-
-function clearCompletedTasks() {
-  const before = STATE.tasks.length;
-  STATE.tasks = STATE.tasks.filter(t => t.status !== 'completed');
-  renderTaskBoard();
-  toast('success', `Cleared ${before - STATE.tasks.length} completed tasks`);
-}
-
-function inspectTask(id) {
-  const t = STATE.tasks.find(x => x.id === id);
-  if (!t) return;
-  document.getElementById('inspector-title').textContent = `Task: ${t.id}`;
-  document.getElementById('inspector-body').innerHTML = `
-    <div class="inspector-section">
-      <div class="inspector-section-title">Task Info</div>
-      ${propRow('ID', t.id, 'cyan')}
-      ${propRow('Type', t.type)}
-      ${propRow('Status', t.status, statusColor(t.status))}
-      ${propRow('Priority', t.priority, priorityColor(t.priority))}
-      ${propRow('Progress', t.progress+'%', 'cyan')}
-      ${propRow('Assigned', t.agent || 'Unassigned')}
-      ${propRow('Created', new Date(t.created).toLocaleTimeString())}
-    </div>
-    <div class="inspector-section">
-      <div class="inspector-section-title">Progress</div>
-      <div class="health-bar-wrap">
-        <div class="health-label"><span>Completion</span><span>${t.progress}%</span></div>
-        <div class="health-bar"><div class="health-fill" style="width:${t.progress}%;background:linear-gradient(90deg,var(--accent-blue),var(--accent-cyan))"></div></div>
-      </div>
-    </div>
-  `;
-}
-
-// ─── Logs ─────────────────────────────────────────────────────────────────────
-const LOG_TEMPLATES = [
-  ['INFO','Coordinator','Heartbeat received from {agent}'],
-  ['INFO','Mesh','Topology sync complete — {n} nodes'],
-  ['WARN','Scheduler','Task queue depth exceeding threshold ({n})'],
-  ['INFO','Worker','Completed task {task} in {ms}ms'],
-  ['ERROR','Network','Connection timeout to {agent} — retrying'],
-  ['MESH','Router','New peer discovered: {agent}'],
-  ['DEBUG','HealthCheck','Agent {agent} CPU at {n}%'],
-  ['INFO','Consensus','Round {n} reached quorum'],
-  ['WARN','Storage','Disk utilization at {n}%'],
-  ['MESH','Discovery','Gossip broadcast sent to {n} peers'],
-  ['ERROR','Agent','Failed to deserialize message from {agent}'],
-  ['INFO','Gateway','Routed {n} messages this cycle'],
-];
-
-function addLog(level, source, msg) {
-  const entry = { level, source, msg, time: new Date().toLocaleTimeString('en-GB', {hour12:false}) };
-  STATE.logs.unshift(entry);
-  if (STATE.logs.length > 500) STATE.logs.pop();
-  document.getElementById('nav-log-count').textContent = STATE.logs.length;
-  renderLogEntry(entry);
-}
-
-function renderLogEntry(entry) {
-  const stream = document.getElementById('log-stream');
-  if (!matchesFilter(entry)) return;
-  const el = document.createElement('div');
-  el.className = 'log-entry';
-  el.dataset.level = entry.level;
-  el.dataset.msg   = entry.msg.toLowerCase();
-  el.innerHTML = `
-    <span class="log-time">${entry.time}</span>
-    <span class="log-level ${entry.level}">${entry.level}</span>
-    <span class="log-agent">[${entry.source}]</span>
-    <span class="log-msg">${entry.msg}</span>
-  `;
-  stream.prepend(el);
-  // prune DOM
-  while (stream.children.length > 200) stream.removeChild(stream.lastChild);
-}
-
-function matchesFilter(entry) {
-  if (STATE.logFilter !== 'ALL' && entry.level !== STATE.logFilter) return false;
-  if (STATE.logSearch && !entry.msg.toLowerCase().includes(STATE.logSearch)) return false;
-  return true;
-}
-
-function setLogFilter(el, filter) {
-  STATE.logFilter = filter;
-  document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
-  el.classList.add('active');
-  filterLogs();
-}
-
-function filterLogs() {
-  STATE.logSearch = document.getElementById('log-search').value.toLowerCase();
-  const stream = document.getElementById('log-stream');
-  stream.innerHTML = '';
-  STATE.logs.filter(matchesFilter).slice(0,200).forEach(renderLogEntry);
-}
-
-function clearLogs() {
-  STATE.logs = [];
-  document.getElementById('log-stream').innerHTML = '';
-  document.getElementById('nav-log-count').textContent = '0';
-  toast('info', 'Logs cleared');
-}
-
-function exportLogs() {
-  const text = STATE.logs.map(e => `[${e.time}] ${e.level.padEnd(5)} [${e.source}] ${e.msg}`).join('\n');
-  const blob = new Blob([text], { type: 'text/plain' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = `swarmesh-logs-${Date.now()}.txt`;
-  a.click();
-  toast('success', 'Logs exported');
-}
-
-function randomLog() {
-  const tpl = LOG_TEMPLATES[Math.floor(Math.random()*LOG_TEMPLATES.length)];
-  const agent = STATE.agents[Math.floor(Math.random()*STATE.agents.length)];
-  let msg = tpl[2]
-    .replace('{agent}', agent?.id || 'unknown')
-    .replace('{task}',  TASK_TYPES[Math.floor(Math.random()*TASK_TYPES.length)])
-    .replace('{n}',     Math.floor(Math.random()*100))
-    .replace('{ms}',    Math.floor(Math.random()*500+10));
-  addLog(tpl[0], tpl[1], msg);
-}
-
-// ─── Metrics ──────────────────────────────────────────────────────────────────
-const METRIC_DEFS = [
-  { key:'totalMessages', label:'Total Messages',    color:'--accent-cyan',   suffix:'' },
-  { key:'msgPerSec',     label:'Throughput',        color:'--accent-blue',   suffix:'/s' },
-  { key:'avgLatency',    label:'Avg Latency',       color:'--accent-amber',  suffix:'ms' },
-  { key:'meshHealth',    label:'Mesh Health',       color:'--accent-green',  suffix:'%' },
-  { key:'agentCount',    label:'Active Agents',     color:'--accent-purple', suffix:'' },
-  { key:'taskQueue',     label:'Tasks Queued',      color:'--accent-cyan',   suffix:'' },
-  { key:'errRate',       label:'Error Rate',        color:'--accent-red',    suffix:'%' },
-  { key:'consensusRounds',label:'Consensus Rounds', color:'--accent-blue',   suffix:'' },
-];
-
-const sparkData = {};
-METRIC_DEFS.forEach(m => { sparkData[m.key] = []; });
-
-function renderMetrics() {
-  const grid = document.getElementById('metrics-grid');
-  const m = STATE.metrics;
-  m.agentCount    = STATE.agents.filter(a => a.status === 'active').length;
-  m.taskQueue     = STATE.tasks.filter(t => t.status === 'queued').length;
-  m.errRate       = +(Math.random()*2).toFixed(1);
-  m.consensusRounds = (m.consensusRounds||0) + Math.floor(Math.random()*3);
-
-  METRIC_DEFS.forEach(def => {
-    const val = m[def.key] || 0;
-    sparkData[def.key].push(val);
-    if (sparkData[def.key].length > 30) sparkData[def.key].shift();
-  });
-
-  grid.innerHTML = METRIC_DEFS.map(def => {
-    const val  = m[def.key] || 0;
-    const prev = sparkData[def.key].at(-2) || val;
-    const delta = val - prev;
-    const up = delta >= 0;
-    return `
-      <div class="metric-card">
-        <div class="metric-label">${def.label}</div>
-        <div class="metric-value" style="color:var(${def.color})">${Number.isInteger(val)?val:val.toFixed(1)}${def.suffix}</div>
-        <div class="metric-delta ${up?'delta-up':'delta-down'}">
-          ${up?'▲':'▼'} ${Math.abs(delta).toFixed(1)}${def.suffix} vs prev
-        </div>
-        <div class="sparkline"><canvas id="spark-${def.key}" height="36"></canvas></div>
-      </div>`;
-  }).join('');
-
-  // Draw sparklines
-  METRIC_DEFS.forEach(def => {
-    const c = document.getElementById(`spark-${def.key}`);
-    if (!c) return;
-    c.width  = c.parentElement.offsetWidth;
-    c.height = 36;
-    const ctx = c.getContext('2d');
-    const data = sparkData[def.key];
-    if (data.length < 2) return;
-    const min = Math.min(...data), max = Math.max(...data);
-    const range = max - min || 1;
-    ctx.clearRect(0,0,c.width,c.height);
-    const grad = ctx.createLinearGradient(0,0,c.width,0);
-    grad.addColorStop(0, 'rgba(21,101,255,0.3)');
-    grad.addColorStop(1, 'rgba(0,229,255,0.8)');
-    ctx.beginPath();
-    ctx.strokeStyle = grad;
-    ctx.lineWidth = 1.5;
-    data.forEach((v,i) => {
-      const x = (i/(data.length-1))*c.width;
-      const y = c.height - ((v-min)/range)*(c.height-4) - 2;
-      i===0 ? ctx.moveTo(x,y) : ctx.lineTo(x,y);
-    });
-    ctx.stroke();
-    // fill
-    ctx.lineTo(c.width, c.height); ctx.lineTo(0, c.height); ctx.closePath();
-    const fillGrad = ctx.createLinearGradient(0,0,0,c.height);
-    fillGrad.addColorStop(0,'rgba(0,229,255,0.12)');
-    fillGrad.addColorStop(1,'rgba(0,229,255,0)');
-    ctx.fillStyle = fillGrad;
-    ctx.fill();
-  });
-
-  // Agent perf table
-  const table = document.getElementById('agent-perf-table');
-  table.innerHTML = `
-    <div style="display:grid;grid-template-columns:1fr 80px 80px 80px 80px;gap:1px;background:var(--border);border-radius:8px;overflow:hidden;font-size:0.74rem">
-      <div style="background:var(--bg-card);padding:8px 12px;color:var(--text-muted);font-weight:700">Agent</div>
-      <div style="background:var(--bg-card);padding:8px 12px;color:var(--text-muted);font-weight:700;text-align:right">CPU%</div>
-      <div style="background:var(--bg-card);padding:8px 12px;color:var(--text-muted);font-weight:700;text-align:right">MEM%</div>
-      <div style="background:var(--bg-card);padding:8px 12px;color:var(--text-muted);font-weight:700;text-align:right">Tasks</div>
-      <div style="background:var(--bg-card);padding:8px 12px;color:var(--text-muted);font-weight:700;text-align:right">Latency</div>
-      ${STATE.agents.map(a => `
-        <div style="background:var(--bg-panel);padding:8px 12px;display:flex;align-items:center;gap:6px">
-          <div class="agent-status-indicator status-${a.status}" style="width:6px;height:6px"></div>
-          <span style="color:var(--text-primary)">${a.name}</span>
-          <span style="color:var(--text-muted);font-size:0.66rem">${a.role}</span>
-        </div>
-        <div style="background:var(--bg-panel);padding:8px 12px;text-align:right;color:${a.cpu>80?'var(--accent-red)':a.cpu>60?'var(--accent-amber)':'var(--accent-green)'}">${a.cpu.toFixed(0)}</div>
-        <div style="background:var(--bg-panel);padding:8px 12px;text-align:right;color:var(--accent-cyan)">${a.memory.toFixed(0)}</div>
-        <div style="background:var(--bg-panel);padding:8px 12px;text-align:right;color:var(--text-secondary)">${a.tasks}</div>
-        <div style="background:var(--bg-panel);padding:8px 12px;text-align:right;color:var(--text-muted)">${a.latency}ms</div>
-      `).join('')}
-    </div>`;
-
-  document.getElementById('metrics-updated').textContent = 'Last updated: ' + new Date().toLocaleTimeString();
-}
-
-// ─── Canvas Mesh Renderer ─────────────────────────────────────────────────────
-let canvas, ctx;
-function initCanvas() {
-  canvas = document.getElementById('mesh-canvas');
-  ctx    = canvas.getContext('2d');
-  resizeCanvas();
-  window.addEventListener('resize', resizeCanvas);
-  canvas.addEventListener('mousemove', onCanvasMouseMove);
-  canvas.addEventListener('mousedown', onCanvasMouseDown);
-  canvas.addEventListener('mouseup',   onCanvasMouseUp);
-  canvas.addEventListener('click',     onCanvasClick);
-  canvas.addEventListener('wheel',     onCanvasWheel, { passive: true });
-  requestAnimationFrame(renderLoop);
-}
-
-function resizeCanvas() {
-  const wrap = document.getElementById('mesh-canvas-wrap');
-  canvas.width  = wrap.clientWidth;
-  canvas.height = wrap.clientHeight;
-}
-
-function resetCamera() {
-  STATE.camera = { x: 0, y: 0, zoom: 1 };
-  // Re-center agents
-  const cx = canvas.width/2, cy = canvas.height/2;
-  STATE.agents.forEach((a, i) => {
-    const angle = (i / STATE.agents.length) * Math.PI * 2;
-    const r = Math.min(canvas.width, canvas.height) * 0.3;
-    a.x = cx + Math.cos(angle)*r;
-    a.y = cy + Math.sin(angle)*r;
-  });
-}
-
-function togglePhysics() {
-  STATE.physicsEnabled = !STATE.physicsEnabled;
-  const btn = document.getElementById('physics-btn');
-  btn.style.color = STATE.physicsEnabled ? 'var(--accent-cyan)' : 'var(--text-muted)';
-  toast('info', `Physics simulation ${STATE.physicsEnabled?'enabled':'disabled'}`);
-}
-
-function toggleLabels() {
-  STATE.showLabels = !STATE.showLabels;
-}
-
-let isDragging = false, dragNode = null, dragOffX = 0, dragOffY = 0;
-let isPanning = false, panStartX = 0, panStartY = 0, camStartX = 0, camStartY = 0;
-
-function worldToScreen(x, y) {
-  return {
-    x: (x - canvas.width/2 ) * STATE.camera.zoom + canvas.width/2  + STATE.camera.x,
-    y: (y - canvas.height/2) * STATE.camera.zoom + canvas.height/2 + STATE.camera.y,
-  };
-}
-function screenToWorld(sx, sy) {
-  return {
-    x: (sx - canvas.width/2  - STATE.camera.x) / STATE.camera.zoom + canvas.width/2,
-    y: (sy - canvas.height/2 - STATE.camera.y) / STATE.camera.zoom + canvas.height/2,
-  };
-}
-
-function getNodeAt(sx, sy) {
-  const w = screenToWorld(sx, sy);
-  return STATE.agents.find(a => {
-    const s = worldToScreen(a.x, a.y);
-    const dx = sx - s.x, dy = sy - s.y;
-    return Math.sqrt(dx*dx+dy*dy) <= a.radius * STATE.camera.zoom + 4;
-  });
-}
-
-function onCanvasMouseMove(e) {
-  const rect = canvas.getBoundingClientRect();
-  const mx = e.clientX - rect.left, my = e.clientY - rect.top;
-  STATE.hoveredNode = getNodeAt(mx, my);
-  canvas.style.cursor = STATE.hoveredNode ? 'pointer' : isDragging ? 'grabbing' : isPanning ? 'grabbing' : 'default';
-  if (isDragging && dragNode) {
-    const w = screenToWorld(mx, my);
-    dragNode.x = w.x; dragNode.y = w.y;
-    dragNode.vx = 0;  dragNode.vy = 0;
-  } else if (isPanning) {
-    STATE.camera.x = camStartX + (mx - panStartX);
-    STATE.camera.y = camStartY + (my - panStartY);
-  }
-}
-
-function onCanvasMouseDown(e) {
-  const rect = canvas.getBoundingClientRect();
-  const mx = e.clientX - rect.left, my = e.clientY - rect.top;
-  const node = getNodeAt(mx, my);
-  if (node) {
-    isDragging = true; dragNode = node;
-  } else {
-    isPanning = true;
-    panStartX = mx; panStartY = my;
-    camStartX = STATE.camera.x; camStartY = STATE.camera.y;
-  }
-}
-
-function onCanvasMouseUp() {
-  isDragging = false; dragNode = null;
-  isPanning = false;
-}
-
-function onCanvasClick(e) {
-  const rect = canvas.getBoundingClientRect();
-  const mx = e.clientX - rect.left, my = e.clientY - rect.top;
-  const node = getNodeAt(mx, my);
-  if (node) selectAgent(node.id);
-}
-
-function onCanvasWheel(e) {
-  const factor = e.deltaY > 0 ? 0.9 : 1.1;
-  STATE.camera.zoom = Math.max(0.2, Math.min(4, STATE.camera.zoom * factor));
-}
-
-// Physics tick
-function physicsTick() {
-  if (!STATE.physicsEnabled) return;
-  const agents = STATE.agents;
-  const K_REPEL = 3000, K_ATTRACT = 0.01, DAMPING = 0.85, IDEAL = 160;
-  agents.forEach(a => {
-    // Repulsion
-    agents.forEach(b => {
-      if (a === b) return;
-      const dx = a.x - b.x, dy = a.y - b.y;
-      const dist = Math.sqrt(dx*dx+dy*dy) || 1;
-      const force = K_REPEL / (dist*dist);
-      a.vx += (dx/dist)*force;
-      a.vy += (dy/dist)*force;
-    });
-    // Attraction along edges
-    a.peers.forEach(pid => {
-      const b = agents.find(x => x.id === pid);
-      if (!b) return;
-      const dx = b.x - a.x, dy = b.y - a.y;
-      const dist = Math.sqrt(dx*dx+dy*dy) || 1;
-      const force = (dist - IDEAL) * K_ATTRACT;
-      a.vx += (dx/dist)*force;
-      a.vy += (dy/dist)*force;
-    });
-    // Center gravity
-    const cx = canvas.width/2, cy = canvas.height/2;
-    a.vx += (cx - a.x) * 0.0003;
-    a.vy += (cy - a.y) * 0.0003;
-  });
-  agents.forEach(a => {
-    if (isDragging && dragNode === a) return;
-    a.vx *= DAMPING; a.vy *= DAMPING;
-    a.x  += a.vx;   a.y  += a.vy;
-  });
-}
-
-// Animated packets
-const packets = [];
-function spawnPacket() {
-  if (STATE.agents.length < 2) return;
-  const src = STATE.agents[Math.floor(Math.random()*STATE.agents.length)];
-  if (!src.peers.length) return;
-  const dstId = src.peers[Math.floor(Math.random()*src.peers.length)];
-  const dst   = STATE.agents.find(a => a.id === dstId);
-  if (!dst) return;
-  packets.push({ sx: src.x, sy: src.y, dx: dst.x, dy: dst.y, t: 0, color: COLORS.cyan });
-  STATE.metrics.totalMessages++;
-  STATE.msgCountWindow.push(Date.now());
-}
-
-function renderLoop(ts) {
-  STATE.animFrame = requestAnimationFrame(renderLoop);
-  physicsTick();
-
-  // Update packets
-  for (let i = packets.length-1; i >= 0; i--) {
-    packets[i].t += 0.025;
-    if (packets[i].t >= 1) packets.splice(i,1);
-  }
-
-  ctx.clearRect(0,0,canvas.width,canvas.height);
-  ctx.save();
-
-  // Apply camera
-  ctx.translate(canvas.width/2 + STATE.camera.x, canvas.height/2 + STATE.camera.y);
-  ctx.scale(STATE.camera.zoom, STATE.camera.zoom);
-  ctx.translate(-canvas.width/2, -canvas.height/2);
-
-  // Draw edges
-  const drawn = new Set();
-  STATE.agents.forEach(a => {
-    a.peers.forEach(pid => {
-      const key = [a.id,pid].sort().join('-');
-      if (drawn.has(key)) return;
-      drawn.add(key);
-      const b = STATE.agents.find(x => x.id === pid);
-      if (!b) return;
-      const isActive = a.status==='active' && b.status==='active';
-      ctx.beginPath();
-      ctx.moveTo(a.x, a.y);
-      ctx.lineTo(b.x, b.y);
-      ctx.strokeStyle = isActive ? COLORS.linkActive : COLORS.link;
-      ctx.lineWidth   = isActive ? 1.5 : 0.8;
-      ctx.setLineDash(isActive ? [] : [4,6]);
-      ctx.stroke();
-      ctx.setLineDash([]);
-    });
-  });
-
-  // Draw packets
-  packets.forEach(p => {
-    const t  = p.t;
-    const px = p.sx + (p.dx-p.sx)*t;
-    const py = p.sy + (p.dy-p.sy)*t;
-    ctx.beginPath();
-    ctx.arc(px, py, 3, 0, Math.PI*2);
-    ctx.fillStyle = COLORS.cyan;
-    ctx.shadowColor = COLORS.cyan;
-    ctx.shadowBlur  = 8;
-    ctx.fill();
-    ctx.shadowBlur = 0;
-  });
-
-  // Draw nodes
-  const t = Date.now() / 1000;
-  STATE.agents.forEach(a => {
-    const isSelected = STATE.selectedAgent === a.id;
-    const isHovered  = STATE.hoveredNode  === a;
-    const roleInfo   = ROLES[a.role] || ROLES.worker;
-    const statusColor = { active: COLORS.active, idle: COLORS.idle, error: COLORS.error, offline: COLORS.offline }[a.status] || COLORS.offline;
-
-    // Pulse ring for active
-    if (a.status === 'active') {
-      const pulseR = a.radius + 6 + Math.sin(t*2 + a.pulsePhase)*4;
-      ctx.beginPath();
-      ctx.arc(a.x, a.y, pulseR, 0, Math.PI*2);
-      ctx.strokeStyle = statusColor + '44';
-      ctx.lineWidth = 1.5;
-      ctx.stroke();
-    }
-
-    // Selection ring
-    if (isSelected) {
-      ctx.beginPath();
-      ctx.arc(a.x, a.y, a.radius+10, 0, Math.PI*2);
-      ctx.strokeStyle = COLORS.cyan;
-      ctx.lineWidth = 2;
-      ctx.shadowColor = COLORS.cyan;
-      ctx.shadowBlur  = 16;
-      ctx.stroke();
-      ctx.shadowBlur = 0;
-    }
-
-    // Node body
-    const grad = ctx.createRadialGradient(a.x-5, a.y-5, 2, a.x, a.y, a.radius);
-    grad.addColorStop(0, roleInfo.color + 'cc');
-    grad.addColorStop(1, roleInfo.color + '44');
-    ctx.beginPath();
-    ctx.arc(a.x, a.y, a.radius, 0, Math.PI*2);
-    ctx.fillStyle = grad;
-    ctx.fill();
-
-    // Border
-    ctx.beginPath();
-    ctx.arc(a.x, a.y, a.radius, 0, Math.PI*2);
-    ctx.strokeStyle = isHovered ? COLORS.cyan : statusColor;
-    ctx.lineWidth   = isHovered || isSelected ? 2.5 : 1.5;
-    ctx.stroke();
-
-    // Status dot
-    ctx.beginPath();
-    ctx.arc(a.x + a.radius*0.65, a.y - a.radius*0.65, 5, 0, Math.PI*2);
-    ctx.fillStyle = statusColor;
-    ctx.shadowColor = statusColor;
-    ctx.shadowBlur  = 8;
-    ctx.fill();
-    ctx.shadowBlur = 0;
-
-    // Emoji icon
-    ctx.font = '13px serif';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(roleInfo.emoji, a.x, a.y);
-
-    // Label
-    if (STATE.showLabels || isHovered || isSelected) {
-      ctx.font = isSelected ? 'bold 11px Inter, sans-serif' : '10px Inter, sans-serif';
-      ctx.fillStyle = isSelected ? COLORS.cyan : '#c0d8e8';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'top';
-      ctx.fillText(a.name, a.x, a.y + a.radius + 5);
-      if (isHovered) {
-        ctx.font = '9px Inter, sans-serif';
-        ctx.fillStyle = '#7ab3d4';
-        ctx.fillText(`CPU:${a.cpu.toFixed(0)}% MEM:${a.memory.toFixed(0)}%`, a.x, a.y + a.radius + 17);
-      }
-    }
-  });
-
-  ctx.restore();
-
-  // Update canvas stats
-  const peerCount = STATE.agents.reduce((s,a) => s + a.peers.length, 0) / 2;
-  document.getElementById('cs-agents').textContent  = STATE.agents.length;
-  document.getElementById('cs-links').textContent   = Math.floor(peerCount);
-  document.getElementById('cs-msgs').textContent    = STATE.metrics.totalMessages;
-  document.getElementById('cs-latency').textContent = STATE.metrics.avgLatency + 'ms';
-}
-
-// ─── Agent UI ─────────────────────────────────────────────────────────────────
-function refreshAgentList() {
-  const list = document.getElementById('agent-list');
-  list.innerHTML = STATE.agents.map(a => {
-    const role = ROLES[a.role] || ROLES.worker;
-    return `
-      <div class="agent-card ${STATE.selectedAgent===a.id?'selected':''}" onclick="selectAgent('${a.id}')">
-        <div class="agent-avatar" style="background:${role.color}22;color:${role.color}">${role.emoji}</div>
-        <div class="agent-info">
-          <div class="agent-name">${a.name}</div>
-          <div class="agent-role">${a.role}</div>
-        </div>
-        <div class="agent-status-indicator status-${a.status}"></div>
-      </div>`;
-  }).join('');
-}
-
-function refreshCounts() {
-  const active = STATE.agents.filter(a => a.status==='active').length;
-  document.getElementById('nav-agent-count').textContent    = STATE.agents.length;
-  document.getElementById('sidebar-active-count').textContent = active;
-}
-
-function selectAgent(id) {
-  STATE.selectedAgent = id;
-  const a = STATE.agents.find(x => x.id === id);
-  if (!a) return;
-  refreshAgentList();
-  renderInspector(a);
-}
-
-function renderInspector(a) {
-  const role = ROLES[a.role] || ROLES.worker;
-  document.getElementById('inspector-title').textContent = `${role.emoji} ${a.name}`;
-  document.getElementById('inspector-body').innerHTML = `
-    <div class="inspector-section">
-      <div class="inspector-section-title">Identity</div>
-      ${propRow('ID',     a.id,     'cyan')}
-      ${propRow('Name',   a.name)}
-      ${propRow('Role',   a.role,   'cyan')}
-      ${propRow('Status', a.status, statusColor(a.status))}
-      ${propRow('Priority', a.priority)}
-    </div>
-    <div class="inspector-section">
-      <div class="inspector-section-title">Performance</div>
-      <div class="health-bar-wrap">
-        <div class="health-label"><span>CPU</span><span>${a.cpu.toFixed(0)}%</span></div>
-        <div class="health-bar"><div class="health-fill" style="width:${a.cpu}%;background:${a.cpu>80?'var(--accent-red)':a.cpu>60?'var(--accent-amber)':'var(--accent-green)'}"></div></div>
-      </div>
-      <div class="health-bar-wrap" style="margin-top:8px">
-        <div class="health-label"><span>Memory</span><span>${a.memory.toFixed(0)}%</span></div>
-        <div class="health-bar"><div class="health-fill" style="width:${a.memory}%;background:var(--accent-cyan)"></div></div>
-      </div>
-      ${propRow('Latency',   a.latency+'ms', 'amber')}
-      ${propRow('Tasks',     a.tasks)}
-      ${propRow('Messages',  a.messages)}
-      ${propRow('Uptime',    fmtDuration(a.uptime))}
-    </div>
-    <div class="inspector-section">
-      <div class="inspector-section-title">Capabilities</div>
-      <div class="capability-list">${a.capabilities.map(c=>`<span class="capability-tag">${c}</span>`).join('')}</div>
-    </div>
-    <div class="inspector-section">
-      <div class="inspector-section-title">Peers (${a.peers.length})</div>
-      <div class="msg-queue">${a.peers.length ? a.peers.map(pid => {
-        const peer = STATE.agents.find(x => x.id===pid);
-        return `<div class="msg-item"><span class="msg-type">${pid}</span><span class="msg-from">${peer?.status||'?'}</span></div>`;
-      }).join('') : '<div class="msg-item" style="color:var(--text-muted)">No peers</div>'}</div>
-    </div>
-    <div class="inspector-section">
-      <div class="inspector-section-title">Actions</div>
-      <div style="display:flex;flex-wrap:wrap;gap:6px">
-        <button class="btn btn-ghost btn-sm" onclick="agentAction('${a.id}','pause')">⏸ Pause</button>
-        <button class="btn btn-ghost btn-sm" onclick="agentAction('${a.id}','resume')">▶ Resume</button>
-        <button class="btn btn-ghost btn-sm" onclick="agentAction('${a.id}','restart')">↺ Restart</button>
-        <button class="btn btn-danger btn-sm" onclick="agentAction('${a.id}','kill')">✕ Kill</button>
-      </div>
-    </div>
-  `;
-}
-
-function clearInspector() {
-  STATE.selectedAgent = null;
-  document.getElementById('inspector-title').textContent = 'Inspector';
-  document.getElementById('inspector-body').innerHTML = `
-    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:200px;color:var(--text-muted);font-size:0.8rem;text-align:center;gap:10px">
-      <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-      Click an agent node or card<br>to inspect its details
-    </div>`;
-  refreshAgentList();
-}
-
-function agentAction(id, action) {
-  const a = STATE.agents.find(x => x.id === id);
-  if (!a) return;
-  const msgs = { pause:'paused', resume:'resumed', restart:'restarted', kill:'terminated' };
-  const statuses = { pause:'idle', resume:'active', restart:'active', kill:'offline' };
-  if (action === 'kill') {
-    a.status = 'offline';
-    addLog('WARN', 'Coordinator', `Agent ${a.id} has been killed by operator`);
-    toast('warn', `Agent ${a.name} terminated`);
-  } else {
-    a.status = statuses[action];
-    addLog('INFO', 'Coordinator', `Agent ${a.id} ${msgs[action]} by operator`);
-    toast('success', `Agent ${a.name} ${msgs[action]}`);
-  }
-  renderInspector(a);
-  refreshAgentList();
-  refreshCounts();
-}
-
-// ─── Deploy Modal ─────────────────────────────────────────────────────────────
-function openDeployModal()  { document.getElementById('deploy-modal').classList.add('open'); }
-function closeDeployModal() { document.getElementById('deploy-modal').classList.remove('open'); }
-
-function deployAgent() {
-  const name = document.getElementById('f-name').value.trim();
-  const role  = document.getElementById('f-role').value;
-  const priority = document.getElementById('f-priority').value;
-  const concurrency = parseInt(document.getElementById('f-concurrency').value) || 4;
-  const configRaw = document.getElementById('f-config').value.trim();
-  const peersRaw  = document.getElementById('f-peers').value.trim();
-
-  if (!name) { toast('error', 'Agent name is required'); return; }
-
-  let config = {};
-  if (configRaw) {
-    try { config = JSON.parse(configRaw); }
-    catch(e) { toast('error', 'Invalid JSON config'); return; }
-  }
-
-  const caps = [...document.querySelectorAll('#deploy-modal .cap-checkbox input:checked')].map(i => i.value);
-  const peers = peersRaw ? peersRaw.split(',').map(s => s.trim()).filter(Boolean) : [];
-
-  const agent = createAgent({ name, role, priority, concurrency, capabilities: caps, peers });
-  STATE.agents.push(agent);
-  refreshAgentList();
-  refreshCounts();
-  renderTaskBoard();
-  addLog('MESH', 'Coordinator', `New agent deployed: ${name} (${role})`);
-  toast('success', `Agent "${name}" deployed successfully`);
-  closeDeployModal();
-
-  // Reset form
-  ['f-name','f-config','f-peers'].forEach(id => document.getElementById(id).value = '');
-  document.getElementById('f-role').value = 'worker';
-}
-
-// ─── Broadcast / E-Stop ───────────────────────────────────────────────────────
-function broadcastAll() {
-  addLog('INFO', 'Coordinator', `Broadcast sent to ${STATE.agents.length} agents`);
-  toast('info', `Broadcast dispatched to ${STATE.agents.length} agents`);
-  // spawn many packets
-  for (let i=0; i<STATE.agents.length*2; i++) setTimeout(spawnPacket, i*40);
-}
-
-function emergencyStop() {
-  if (!confirm('Emergency stop all agents? This cannot be undone.')) return;
-  STATE.agents.forEach(a => { a.status = 'offline'; a.vx = 0; a.vy = 0; });
-  STATE.tasks.filter(t => t.status==='running').forEach(t => { t.status='failed'; t.progress=0; });
-  refreshAgentList();
-  refreshCounts();
-  renderTaskBoard();
-  addLog('ERROR', 'Coordinator', 'EMERGENCY STOP — all agents halted by operator');
-  toast('error', 'Emergency stop executed — all agents offline');
-}
-
-// ─── Send Command ─────────────────────────────────────────────────────────────
-function sendCommand() {
-  const input = document.getElementById('cmd-input');
-  const cmd   = input.value.trim();
-  if (!cmd) return;
-  if (!STATE.selectedAgent) { toast('warn', 'Select an agent first'); return; }
-  const a = STATE.agents.find(x => x.id === STATE.selectedAgent);
-  addLog('INFO', 'Operator', `CMD → ${a?.name}: ${cmd}`);
-  // Simulate responses
-  setTimeout(() => {
-    if (cmd.toUpperCase() === 'PING') addLog('INFO', a?.name||'?', 'PONG — agent alive');
-    else if (cmd.toUpperCase() === 'PAUSE')  agentAction(STATE.selectedAgent, 'pause');
-    else if (cmd.toUpperCase() === 'RESUME') agentAction(STATE.selectedAgent, 'resume');
-    else addLog('DEBUG', a?.name||'?', `ACK: ${cmd}`);
-  }, 200 + Math.random()*300);
-  input.value = '';
-  toast('info', `Command sent: ${cmd}`);
-}
-
-document.getElementById('cmd-input').addEventListener('keydown', e => {
-  if (e.key === 'Enter') sendCommand();
-});
-
-// ─── Tab & Nav Switching ──────────────────────────────────────────────────────
-function switchTab(name) {
-  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
-  document.getElementById('tab-'+name).classList.add('active');
-  document.getElementById('panel-'+name).classList.add('active');
-  if (name === 'metrics') renderMetrics();
-}
-
-function switchNav(el, name) {
-  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-  el.classList.add('active');
-  switchTab(name);
-}
-
-// ─── Toasts ───────────────────────────────────────────────────────────────────
-function toast(type, msg, duration=3500) {
-  const icons = { success:'✅', error:'❌', warn:'⚠️', info:'ℹ️' };
-  const container = document.getElementById('toast-container');
-  const el = document.createElement('div');
-  el.className = `toast toast-${type}`;
-  el.innerHTML = `
-    <span class="toast-icon">${icons[type]||'ℹ️'}</span>
-    <span class="toast-msg">${msg}</span>
-    <span class="toast-close" onclick="dismissToast(this.parentElement)">×</span>`;
-  container.appendChild(el);
-  setTimeout(() => dismissToast(el), duration);
-}
-
-function dismissToast(el) {
-  if (!el || !el.parentElement) return;
-  el.classList.add('removing');
-  setTimeout(() => el.remove(), 320);
-}
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-function propRow(key, val, colorClass='') {
-  return `<div class="prop-row">
-    <span class="prop-key">${key}</span>
-    <span class="prop-value ${colorClass}">${val}</span>
-  </div>`;
-}
-
-function statusColor(s) {
-  return { active:'green', idle:'amber', error:'red', offline:'' }[s] || '';
-}
-
-function priorityColor(p) {
-  return { critical:'red', high:'amber', medium:'cyan', low:'green' }[p] || '';
-}
-
-function fmtDuration(sec) {
-  const h = Math.floor(sec/3600), m = Math.floor((sec%3600)/60), s = sec%60;
-  return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
-}
-
-function shuffle(arr) {
-  const a = [...arr];
-  for (let i=a.length-1;i>0;i--) { const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; }
-  return a;
-}
-
-function toggleTheme() { toast('info', 'Theme toggle coming soon'); }
-
-// ─── Simulation Tick ──────────────────────────────────────────────────────────
-function simTick() {
-  // Update uptime
-  STATE.metrics.uptime = Math.floor((Date.now() - STATE.startTime)/1000);
-  document.getElementById('hdr-uptime').textContent = 'uptime ' + fmtDuration(STATE.metrics.uptime);
-
-  // Agent metric drift
-  STATE.agents.forEach(a => {
-    if (a.status === 'offline') return;
-    a.cpu    = Math.max(5,  Math.min(99, a.cpu    + (Math.random()-0.5)*8));
-    a.memory = Math.max(10, Math.min(95, a.memory + (Math.random()-0.5)*4));
-    a.latency= Math.max(2,  Math.min(200,a.latency + (Math.random()-0.5)*10));
-    // Random status flicker
-    if (Math.random() < 0.005) a.status = 'error';
-    if (Math.random() < 0.02 && a.status === 'error') a.status = 'active';
-    if (Math.random() < 0.01) a.status = a.status==='active'?'idle':'active';
-  });
-
-  // Task progression
-  STATE.tasks.filter(t => t.status==='running').forEach(t => {
-    t.progress = Math.min(100, t.progress + Math.floor(Math.random()*8+1));
-    if (t.progress >= 100) {
-      t.status = Math.random() < 0.9 ? 'completed' : 'failed';
-    }
-  });
-  // Occasionally start a queued task
-  const queued = STATE.tasks.filter(t => t.status==='queued');
-  if (queued.length && Math.random() < 0.3) {
-    const t = queued[0];
-    t.status = 'running';
-    t.agent  = STATE.agents[Math.floor(Math.random()*STATE.agents.length)]?.id;
-    addLog('INFO','Scheduler',`Task ${t.id} (${t.type}) assigned to ${t.agent}`);
-  }
-  renderTaskBoard();
-
-  // Throughput
-  const now = Date.now();
-  STATE.msgCountWindow = STATE.msgCountWindow.filter(t => now-t < 1000);
-  STATE.metrics.msgPerSec = STATE.msgCountWindow.length;
-  document.getElementById('msg-throughput').textContent = STATE.metrics.msgPerSec + ' msg/s';
-
-  // Latency avg
-  STATE.metrics.avgLatency = Math.floor(STATE.agents.reduce((s,a)=>s+a.latency,0)/(STATE.agents.length||1));
-
-  // Mesh health
-  const active = STATE.agents.filter(a=>a.status==='active').length;
-  STATE.metrics.meshHealth = Math.round((active/Math.max(1,STATE.agents.length))*100);
-  const hdrStatus = document.getElementById('hdr-mesh-status');
-  if (STATE.metrics.meshHealth < 50) {
-    hdrStatus.textContent = 'Mesh Degraded';
-    hdrStatus.style.color = 'var(--accent-amber)';
-  } else {
-    hdrStatus.textContent = 'Mesh Online';
-    hdrStatus.style.color = '';
-  }
-
-  refreshCounts();
-
-  // Spawn packets
-  if (Math.random() < 0.6) spawnPacket();
-
-  // Random log
-  if (Math.random() < 0.4) randomLog();
-}
-
-// ─── Initial Seed Logs ────────────────────────────────────────────────────────
-function seedLogs() {
-  const msgs = [
-    ['MESH','Discovery','SwarMesh coordination layer initialised'],
-    ['INFO','Coordinator','Bootstrap complete — awaiting peer connections'],
-    ['MESH','Router','Gossip protocol active on UDP:7946'],
-    ['INFO','HealthCheck','All agents responding within SLA'],
-    ['DEBUG','Scheduler','Task dispatcher online — queue depth: 0'],
-  ];
-  msgs.forEach(([l,s,m]) => addLog(l,s,m));
-}
-
-// ─── Bootstrap ────────────────────────────────────────────────────────────────
-window.addEventListener('DOMContentLoaded', () => {
-  initCanvas();
-  initAgents();
-  initTasks();
-  seedLogs();
-  resetCamera();
-  setInterval(simTick, 800);
-  toast('success', 'SwarMesh coordination mesh online');
-});
-</script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        const moodSlider = document.getElementById('moodSlider');
+        const moodValue = document.getElementById('moodValue');
+        const streakCount = document.getElementById('streakCount');
+        let streak = localStorage.getItem('streak') || 0;
+        streakCount.textContent = streak;
+
+        const moodLabels = {
+            1: 'Very Sad',
+            2: 'Sad',
+            3: 'Down',
+            4: 'Slightly Down',
+            5: 'Neutral',
+            6: 'Slightly Happy',
+            7: 'Happy',
+            8: 'Very Happy',
+            9: 'Excellent',
+            10: 'Ecstatic'
+        };
+
+        moodSlider.addEventListener('input', () => {
+            moodValue.textContent = moodLabels[moodSlider.value];
+        });
+
+        const ctx = document.getElementById('moodChart').getContext('2d');
+        let moodChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [{
+                    label: 'Mood Over Time',
+                    data: [],
+                    borderColor: '#00b4d8',
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 10
+                    }
+                }
+            }
+        });
+
+        function saveMood() {
+            const mood = parseInt(moodSlider.value);
+            const date = new Date().toLocaleDateString();
+            
+            // Update chart
+            moodChart.data.labels.push(date);
+            moodChart.data.datasets[0].data.push(mood);
+            moodChart.update();
+
+            // Update streak
+            streak++;
+            localStorage.setItem('streak', streak);
+            streakCount.textContent = streak;
+
+            // Animate the save button
+            const btn = document.querySelector('.btn');
+            btn.style.animation = 'pulse 0.5s';
+            setTimeout(() => btn.style.animation = '', 500);
+        }
+
+        // Load previous data
+        const mockDates = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
+        const mockMoods = [7, 6, 8, 7, 9];
+        moodChart.data.labels = mockDates;
+        moodChart.data.datasets[0].data = mockMoods;
+        moodChart.update();
+    </script>
 </body>
 </html>
