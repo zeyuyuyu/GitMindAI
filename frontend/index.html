@@ -3,25 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GitMindAI - Intelligent Git Assistant</title>
+    <title>DAE Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --primary: #6366f1;
-            --secondary: #4f46e5;
-            --dark: #1e1b4b;
-            --light: #f5f5f5;
-        }
-        
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Inter', sans-serif;
+            font-family: 'Poppins', sans-serif;
         }
 
         body {
-            background: var(--dark);
-            color: var(--light);
+            background: linear-gradient(135deg, #1a1f2c, #2d3436);
+            color: #fff;
             min-height: 100vh;
         }
 
@@ -31,199 +25,191 @@
             padding: 2rem;
         }
 
-        .hero {
+        .header {
             text-align: center;
-            padding: 4rem 0;
-            animation: fadeIn 1s ease-in;
+            margin-bottom: 3rem;
         }
 
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .logo {
-            font-size: 3rem;
-            font-weight: bold;
-            background: linear-gradient(45deg, var(--primary), var(--secondary));
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            background: linear-gradient(45deg, #00ff87, #60efff);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            margin-bottom: 1rem;
+            animation: glow 2s ease-in-out infinite alternate;
         }
 
-        .chat-container {
+        @keyframes glow {
+            from { text-shadow: 0 0 10px rgba(96, 239, 255, 0.2); }
+            to { text-shadow: 0 0 20px rgba(96, 239, 255, 0.4); }
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+
+        .card {
             background: rgba(255, 255, 255, 0.1);
-            border-radius: 1rem;
-            padding: 2rem;
             backdrop-filter: blur(10px);
-            max-width: 800px;
-            margin: 0 auto;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-        }
-
-        .messages {
-            height: 400px;
-            overflow-y: auto;
-            margin-bottom: 1rem;
-            padding: 1rem;
-        }
-
-        .message {
-            padding: 1rem;
-            margin: 0.5rem 0;
-            border-radius: 0.5rem;
-            animation: slideIn 0.3s ease-out;
-        }
-
-        @keyframes slideIn {
-            from { transform: translateX(-20px); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
-        }
-
-        .user-message {
-            background: var(--primary);
-            margin-left: 2rem;
-        }
-
-        .ai-message {
-            background: rgba(255, 255, 255, 0.1);
-            margin-right: 2rem;
-        }
-
-        .input-container {
-            display: flex;
-            gap: 1rem;
-        }
-
-        input {
-            flex: 1;
-            padding: 1rem;
-            border: none;
-            border-radius: 0.5rem;
-            background: rgba(255, 255, 255, 0.1);
-            color: var(--light);
-            font-size: 1rem;
-        }
-
-        button {
-            padding: 1rem 2rem;
-            border: none;
-            border-radius: 0.5rem;
-            background: var(--primary);
-            color: var(--light);
-            font-weight: bold;
+            border-radius: 15px;
+            padding: 1.5rem;
+            transition: transform 0.3s ease;
             cursor: pointer;
-            transition: transform 0.2s;
         }
 
-        button:hover {
-            transform: scale(1.05);
-            background: var(--secondary);
+        .card:hover {
+            transform: translateY(-5px);
+        }
+
+        .card h3 {
+            color: #00ff87;
+            margin-bottom: 1rem;
         }
 
         .stats {
             display: flex;
-            justify-content: center;
-            gap: 2rem;
-            margin-top: 2rem;
+            justify-content: space-between;
+            margin-top: 1rem;
         }
 
-        .stat-card {
-            background: rgba(255, 255, 255, 0.1);
-            padding: 1rem;
-            border-radius: 0.5rem;
+        .stat-item {
             text-align: center;
-            min-width: 150px;
         }
 
         .stat-value {
-            font-size: 2rem;
-            font-weight: bold;
-            color: var(--primary);
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #60efff;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+            margin-top: 1rem;
+            overflow: hidden;
+        }
+
+        .progress {
+            height: 100%;
+            background: linear-gradient(90deg, #00ff87, #60efff);
+            width: 75%;
+            animation: progress 1.5s ease-out;
+        }
+
+        @keyframes progress {
+            from { width: 0; }
+        }
+
+        .actions {
+            display: flex;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .btn {
+            background: linear-gradient(45deg, #00ff87, #60efff);
+            border: none;
+            padding: 0.8rem 1.5rem;
+            border-radius: 25px;
+            color: #1a1f2c;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(96, 239, 255, 0.3);
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="hero">
-            <div class="logo">GitMindAI</div>
-            <h2>Your Intelligent Git Assistant</h2>
+        <header class="header">
+            <h1>Decentralized Autonomous Ecosystem</h1>
+            <p>Monitor and manage your DAE components in real-time</p>
+        </header>
+
+        <div class="dashboard-grid">
+            <div class="card">
+                <h3>System Health</h3>
+                <div class="progress-bar">
+                    <div class="progress"></div>
+                </div>
+                <div class="stats">
+                    <div class="stat-item">
+                        <div class="stat-value">98%</div>
+                        <div class="stat-label">Uptime</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">45ms</div>
+                        <div class="stat-label">Latency</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>Node Activity</h3>
+                <div id="node-chart"></div>
+                <div class="stats">
+                    <div class="stat-item">
+                        <div class="stat-value">156</div>
+                        <div class="stat-label">Active Nodes</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">1.2K</div>
+                        <div class="stat-label">Transactions</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>Resource Usage</h3>
+                <div class="stats">
+                    <div class="stat-item">
+                        <div class="stat-value">64%</div>
+                        <div class="stat-label">CPU</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">82%</div>
+                        <div class="stat-label">Memory</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">2.1TB</div>
+                        <div class="stat-label">Storage</div>
+                    </div>
+                </div>
+            </div>
         </div>
 
-        <div class="chat-container">
-            <div class="messages" id="messages">
-                <div class="message ai-message">Hello! I'm GitMindAI. How can I assist you with your Git repository today?</div>
-            </div>
-            <div class="input-container">
-                <input type="text" id="user-input" placeholder="Ask me anything about Git..." />
-                <button onclick="sendMessage()">Send</button>
-            </div>
-        </div>
-
-        <div class="stats">
-            <div class="stat-card">
-                <div class="stat-value" id="commits-count">0</div>
-                <div>Commits Analyzed</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-value" id="suggestions-count">0</div>
-                <div>AI Suggestions</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-value" id="efficiency-score">0%</div>
-                <div>Efficiency Score</div>
-            </div>
+        <div class="actions">
+            <button class="btn">Deploy Node</button>
+            <button class="btn">Network Settings</button>
+            <button class="btn">View Analytics</button>
         </div>
     </div>
 
     <script>
-        let commitCount = 0;
-        let suggestionsCount = 0;
-        let efficiencyScore = 0;
-
-        function updateStats() {
-            document.getElementById('commits-count').textContent = commitCount;
-            document.getElementById('suggestions-count').textContent = suggestionsCount;
-            document.getElementById('efficiency-score').textContent = efficiencyScore + '%';
-        }
-
-        function simulateProgress() {
-            commitCount += Math.floor(Math.random() * 5);
-            suggestionsCount += Math.floor(Math.random() * 3);
-            efficiencyScore = Math.min(100, efficiencyScore + Math.floor(Math.random() * 5));
-            updateStats();
-        }
-
-        function addMessage(content, isUser = false) {
-            const messagesDiv = document.getElementById('messages');
-            const messageDiv = document.createElement('div');
-            messageDiv.className = `message ${isUser ? 'user-message' : 'ai-message'}`;
-            messageDiv.textContent = content;
-            messagesDiv.appendChild(messageDiv);
-            messagesDiv.scrollTop = messagesDiv.scrollHeight;
-        }
-
-        function sendMessage() {
-            const input = document.getElementById('user-input');
-            const message = input.value.trim();
-            if (message) {
-                addMessage(message, true);
-                input.value = '';
-                simulateProgress();
-                setTimeout(() => {
-                    addMessage('I understand your query about Git. Let me analyze and provide a helpful response...');
-                }, 1000);
-            }
-        }
-
-        document.getElementById('user-input').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                sendMessage();
-            }
+        // Add interactive features and real-time data updates here
+        document.querySelectorAll('.card').forEach(card => {
+            card.addEventListener('click', () => {
+                card.style.transform = 'scale(1.02)';
+                setTimeout(() => card.style.transform = '', 200);
+            });
         });
 
-        // Initial animation
-        setInterval(simulateProgress, 5000);
+        // Simulate real-time updates
+        setInterval(() => {
+            document.querySelectorAll('.stat-value').forEach(stat => {
+                const currentValue = parseInt(stat.textContent);
+                const newValue = currentValue + Math.floor(Math.random() * 5) - 2;
+                stat.textContent = `${newValue}${stat.textContent.replace(/[0-9]/g, '')}`;
+            });
+        }, 3000);
     </script>
 </body>
 </html>
