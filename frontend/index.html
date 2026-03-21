@@ -3,19 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MoodMirror - Track Your Emotional Journey</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <title>GitMindAI - Intelligent Git Assistant</title>
     <style>
+        :root {
+            --primary: #6366f1;
+            --secondary: #4f46e5;
+            --dark: #1e1b4b;
+            --light: #f5f5f5;
+        }
+        
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Poppins', sans-serif;
+            font-family: 'Inter', sans-serif;
         }
 
         body {
-            background: linear-gradient(135deg, #1a1a2e, #16213e);
-            color: #fff;
+            background: var(--dark);
+            color: var(--light);
             min-height: 100vh;
         }
 
@@ -25,201 +31,199 @@
             padding: 2rem;
         }
 
-        .header {
+        .hero {
             text-align: center;
-            margin-bottom: 3rem;
+            padding: 4rem 0;
             animation: fadeIn 1s ease-in;
         }
 
-        .header h1 {
-            font-size: 3rem;
-            margin-bottom: 1rem;
-            background: linear-gradient(45deg, #00b4d8, #90e0ef);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        .mood-input {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            padding: 2rem;
-            border-radius: 15px;
-            margin-bottom: 2rem;
-            transform: translateY(0);
-            transition: transform 0.3s ease;
-        }
-
-        .mood-input:hover {
-            transform: translateY(-5px);
-        }
-
-        .mood-slider {
-            width: 100%;
-            margin: 2rem 0;
-            -webkit-appearance: none;
-            height: 15px;
-            border-radius: 10px;
-            background: linear-gradient(90deg, #ff0000, #ffff00, #00ff00);
-            outline: none;
-        }
-
-        .mood-slider::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            width: 25px;
-            height: 25px;
-            border-radius: 50%;
-            background: #fff;
-            cursor: pointer;
-            box-shadow: 0 0 10px rgba(0,0,0,0.3);
-            transition: transform 0.2s;
-        }
-
-        .mood-slider::-webkit-slider-thumb:hover {
-            transform: scale(1.2);
-        }
-
-        .mood-chart {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            padding: 2rem;
-            border-radius: 15px;
-            height: 400px;
-            position: relative;
-        }
-
-        .btn {
-            background: linear-gradient(45deg, #00b4d8, #90e0ef);
-            border: none;
-            padding: 1rem 2rem;
-            color: #fff;
-            border-radius: 25px;
-            cursor: pointer;
-            font-size: 1rem;
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-        }
-
-        .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0,180,216,0.3);
-        }
-
-        .streak-counter {
-            text-align: center;
-            font-size: 1.2rem;
-            margin-top: 2rem;
-            color: #90e0ef;
-        }
-
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(-20px); }
+            from { opacity: 0; transform: translateY(20px); }
             to { opacity: 1; transform: translateY(0); }
         }
 
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-            100% { transform: scale(1); }
+        .logo {
+            font-size: 3rem;
+            font-weight: bold;
+            background: linear-gradient(45deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 1rem;
+        }
+
+        .chat-container {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 1rem;
+            padding: 2rem;
+            backdrop-filter: blur(10px);
+            max-width: 800px;
+            margin: 0 auto;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .messages {
+            height: 400px;
+            overflow-y: auto;
+            margin-bottom: 1rem;
+            padding: 1rem;
+        }
+
+        .message {
+            padding: 1rem;
+            margin: 0.5rem 0;
+            border-radius: 0.5rem;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(-20px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        .user-message {
+            background: var(--primary);
+            margin-left: 2rem;
+        }
+
+        .ai-message {
+            background: rgba(255, 255, 255, 0.1);
+            margin-right: 2rem;
+        }
+
+        .input-container {
+            display: flex;
+            gap: 1rem;
+        }
+
+        input {
+            flex: 1;
+            padding: 1rem;
+            border: none;
+            border-radius: 0.5rem;
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--light);
+            font-size: 1rem;
+        }
+
+        button {
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: 0.5rem;
+            background: var(--primary);
+            color: var(--light);
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        button:hover {
+            transform: scale(1.05);
+            background: var(--secondary);
+        }
+
+        .stats {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 1rem;
+            border-radius: 0.5rem;
+            text-align: center;
+            min-width: 150px;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--primary);
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="header">
-            <h1>MoodMirror</h1>
-            <p>Track your emotional journey, one day at a time</p>
+        <div class="hero">
+            <div class="logo">GitMindAI</div>
+            <h2>Your Intelligent Git Assistant</h2>
         </div>
 
-        <div class="mood-input">
-            <h2>How are you feeling today?</h2>
-            <input type="range" min="1" max="10" value="5" class="mood-slider" id="moodSlider">
-            <div id="moodValue" style="text-align: center; margin: 1rem 0;">Neutral</div>
-            <button class="btn" onclick="saveMood()">Save Mood</button>
+        <div class="chat-container">
+            <div class="messages" id="messages">
+                <div class="message ai-message">Hello! I'm GitMindAI. How can I assist you with your Git repository today?</div>
+            </div>
+            <div class="input-container">
+                <input type="text" id="user-input" placeholder="Ask me anything about Git..." />
+                <button onclick="sendMessage()">Send</button>
+            </div>
         </div>
 
-        <div class="mood-chart">
-            <canvas id="moodChart"></canvas>
-        </div>
-
-        <div class="streak-counter">
-            <h3>Current Streak: <span id="streakCount">0</span> days</h3>
-            <p>Keep tracking to maintain your streak!</p>
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-value" id="commits-count">0</div>
+                <div>Commits Analyzed</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="suggestions-count">0</div>
+                <div>AI Suggestions</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="efficiency-score">0%</div>
+                <div>Efficiency Score</div>
+            </div>
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
-        const moodSlider = document.getElementById('moodSlider');
-        const moodValue = document.getElementById('moodValue');
-        const streakCount = document.getElementById('streakCount');
-        let streak = localStorage.getItem('streak') || 0;
-        streakCount.textContent = streak;
+        let commitCount = 0;
+        let suggestionsCount = 0;
+        let efficiencyScore = 0;
 
-        const moodLabels = {
-            1: 'Very Sad',
-            2: 'Sad',
-            3: 'Down',
-            4: 'Slightly Down',
-            5: 'Neutral',
-            6: 'Slightly Happy',
-            7: 'Happy',
-            8: 'Very Happy',
-            9: 'Excellent',
-            10: 'Ecstatic'
-        };
+        function updateStats() {
+            document.getElementById('commits-count').textContent = commitCount;
+            document.getElementById('suggestions-count').textContent = suggestionsCount;
+            document.getElementById('efficiency-score').textContent = efficiencyScore + '%';
+        }
 
-        moodSlider.addEventListener('input', () => {
-            moodValue.textContent = moodLabels[moodSlider.value];
-        });
+        function simulateProgress() {
+            commitCount += Math.floor(Math.random() * 5);
+            suggestionsCount += Math.floor(Math.random() * 3);
+            efficiencyScore = Math.min(100, efficiencyScore + Math.floor(Math.random() * 5));
+            updateStats();
+        }
 
-        const ctx = document.getElementById('moodChart').getContext('2d');
-        let moodChart = new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: [],
-                datasets: [{
-                    label: 'Mood Over Time',
-                    data: [],
-                    borderColor: '#00b4d8',
-                    tension: 0.4
-                }]
-            },
-            options: {
-                responsive: true,
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        max: 10
-                    }
-                }
+        function addMessage(content, isUser = false) {
+            const messagesDiv = document.getElementById('messages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${isUser ? 'user-message' : 'ai-message'}`;
+            messageDiv.textContent = content;
+            messagesDiv.appendChild(messageDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('user-input');
+            const message = input.value.trim();
+            if (message) {
+                addMessage(message, true);
+                input.value = '';
+                simulateProgress();
+                setTimeout(() => {
+                    addMessage('I understand your query about Git. Let me analyze and provide a helpful response...');
+                }, 1000);
+            }
+        }
+
+        document.getElementById('user-input').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                sendMessage();
             }
         });
 
-        function saveMood() {
-            const mood = parseInt(moodSlider.value);
-            const date = new Date().toLocaleDateString();
-            
-            // Update chart
-            moodChart.data.labels.push(date);
-            moodChart.data.datasets[0].data.push(mood);
-            moodChart.update();
-
-            // Update streak
-            streak++;
-            localStorage.setItem('streak', streak);
-            streakCount.textContent = streak;
-
-            // Animate the save button
-            const btn = document.querySelector('.btn');
-            btn.style.animation = 'pulse 0.5s';
-            setTimeout(() => btn.style.animation = '', 500);
-        }
-
-        // Load previous data
-        const mockDates = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
-        const mockMoods = [7, 6, 8, 7, 9];
-        moodChart.data.labels = mockDates;
-        moodChart.data.datasets[0].data = mockMoods;
-        moodChart.update();
+        // Initial animation
+        setInterval(simulateProgress, 5000);
     </script>
 </body>
 </html>
