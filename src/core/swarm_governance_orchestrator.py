@@ -1,58 +1,56 @@
 import random
 import time
+from typing import List
 
 class SwarmGovernanceOrchestrator:
-    def __init__(self, num_agents, voting_threshold):
-        self.num_agents = num_agents
-        self.voting_threshold = voting_threshold
-        self.agent_states = ["active" for _ in range(num_agents)]
+    def __init__(self, agents: List["Agent"]):
+        self.agents = agents
         self.proposals = []
-        self.proposal_votes = [[] for _ in range(num_agents)]
+        self.voting_power = {agent: 1 for agent in agents}
+        self.voting_results = {}
 
-    def propose_action(self, agent_id, action):
-        self.proposals.append((agent_id, action))
-        for i in range(self.num_agents):
-            self.proposal_votes[i].append(0)
+    def submit_proposal(self, agent: "Agent", proposal: "Proposal"):
+        self.proposals.append(proposal)
+        self.voting_results[proposal] = {}
 
-    def vote_on_proposal(self, agent_id, proposal_idx, vote):
-        self.proposal_votes[agent_id][proposal_idx] = vote
+    def vote_on_proposal(self, agent: "Agent", proposal: "Proposal", vote: bool):
+        if proposal not in self.proposals:
+            raise ValueError("Proposal not found")
+        self.voting_results[proposal][agent] = vote
+        total_votes = sum(self.voting_results[proposal].values())
+        total_voting_power = sum(self.voting_power.values())
+        if total_votes / total_voting_power >= 0.51:
+            self.apply_proposal(proposal)
+            self.proposals.remove(proposal)
+            del self.voting_results[proposal]
 
-    def tally_votes(self):
-        for i, (agent_id, action) in enumerate(self.proposals):
-            votes_for = sum(v[i] for v in self.proposal_votes)
-            votes_against = self.num_agents - votes_for
-            if votes_for >= self.voting_threshold:
-                print(f"Proposal from agent {agent_id} passed: {action}")
-                self.execute_action(agent_id, action)
-            else:
-                print(f"Proposal from agent {agent_id} failed: {action}")
-        self.proposals = []
-        self.proposal_votes = [[] for _ in range(self.num_agents)]
+    def apply_proposal(self, proposal: "Proposal"):
+        proposal.apply(self.agents)
 
-    def execute_action(self, agent_id, action):
-        # Execute the action here
-        pass
+class Proposal:
+    def __init__(self, description: str, apply_func: callable):
+        self.description = description
+        self.apply = apply_func
 
-    def run(self):
-        while True:
-            # Agents propose actions
-            for i in range(self.num_agents):
-                if self.agent_states[i] == "active":
-                    action = self.generate_random_action()
-                    self.propose_action(i, action)
+class Agent:
+    def __init__(self, name: str):
+        self.name = name
 
-            # Agents vote on proposals
-            for i in range(self.num_agents):
-                if self.agent_states[i] == "active":
-                    for j in range(len(self.proposals)):
-                        self.vote_on_proposal(i, j, random.randint(0, 1))
+if __name__ == "__main__":
+    agents = [Agent(f"Agent {i}") for i in range(10)]
+    orchestrator = SwarmGovernanceOrchestrator(agents)
 
-            # Tally votes and execute actions
-            self.tally_votes()
+    def increase_speed_proposal(agents: List[Agent]):
+        for agent in agents:
+            agent.speed += 1
 
-            # Wait for a short time before the next iteration
-            time.sleep(1)
+    proposal = Proposal("Increase agent speed", increase_speed_proposal)
+    orchestrator.submit_proposal(agents[0], proposal)
 
-    def generate_random_action(self):
-        # Generate a random action here
-        return f"Action {random.randint(1, 100)}"
+    for agent in agents:
+        orchestrator.vote_on_proposal(agent, proposal, random.choice([True, False]))
+
+    time.sleep(1)
+    print("Agents speeds after proposal application:")
+    for agent in agents:
+        print(f"{agent.name}: {agent.speed}")
